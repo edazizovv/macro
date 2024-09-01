@@ -38,7 +38,7 @@ class DQControlsErrors:
 
 
 class Routing:
-    DATA_SOURCE_FORMATTER = './data/{0}.csv'
+    DATA_SOURCE_FORMATTER = '../data/data/{0}.csv'
 
 
 class SystemFilesSignatures:

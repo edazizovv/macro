@@ -1,7 +1,5 @@
 #
 import pandas
-from statsmodels.tsa.seasonal import MSTL
-from matplotlib import pyplot
 
 #
 # data = pandas.read_csv('./result.csv')
@@ -31,7 +29,7 @@ resulted.plot(x='date', y=['seasonal_3', 'seasonal_6', 'seasonal_12', 'seasonal_
 # ['GS3', 'T10YIEM', 'USACPIALLMINMEI', 'KCFSI', 'MICH']    TLT_MEAN__pct
 # ['TOTALSA', 'GDP', 'USACPIALLMINMEI', 'EMRATIO', 'KCFSI']
 #
-from functional import SomersD
+from macro.macro.functional import SomersD
 
 
 def target_defined(y):
@@ -54,7 +52,6 @@ def score_defined(y):
 
 data['target'] = data['TLT_MEAN__pct'].apply(func=target_defined)
 
-from scipy.stats import pearsonr, somersd
 """
 target = 'TLT_MEAN__pct'
 pcs = []
@@ -94,7 +91,6 @@ for j in range(data.columns.shape[0]):
     biny_train = data.loc[y_ix_train, 'target'].values
     biny_test = data.loc[y_ix_test, 'target'].values
 
-    from sklearn.model_selection import train_test_split
     xxx_train, xxx_test, yyy_train, yyy_test = x_train, x_test, y_train, y_test
     c = data.columns[j]
     sd = SomersD(data[target].values[1:], data[c].values[:-1])
@@ -174,7 +170,6 @@ for j in range(n):
     biny_train = data.loc[y_ix_train, 'target'].values
     biny_test = data.loc[y_ix_test, 'target'].values
 
-    from sklearn.model_selection import train_test_split
     xxx_train, xxx_test, yyy_train, yyy_test = x_train, x_test, y_train, y_test
     from sklearn.preprocessing import StandardScaler
     sk = StandardScaler()
@@ -195,7 +190,6 @@ for j in range(n):
     y_hat_test_bin = pandas.Series(y_hat_test).apply(func=score_defined).values
     kt_train_bin = kendalltau(x=biny_train, y=y_hat_train_bin).statistic
     kt_test_bin = kendalltau(x=biny_test, y=y_hat_test_bin).statistic
-    from matplotlib import pyplot
     # fig, ax = pyplot.subplots(1, 2)
     # pandas.DataFrame(data={'error': yyy_train - y_hat_train}).hist(bins=20, ax=ax[0])
     # pandas.DataFrame(data={'error': yyy_test - y_hat_test}).hist(bins=20, ax=ax[1])

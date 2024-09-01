@@ -1,6 +1,7 @@
 #
 import hashlib
-
+import _pickle
+import pickle
 
 #
 import numpy
@@ -88,6 +89,43 @@ class UnholyVice:
         self.lag_mid_dt = pandas.to_datetime(lag_mid_dt).isoformat()
         self.mid_dt = pandas.to_datetime(mid_dt).isoformat()
         self.end_dt = pandas.to_datetime(end_dt).isoformat()
+
+        self._signature = None
+
+    @property
+    def parametrization(self):
+        dictated = {'lag_start_dt': hash(str(self.lag_start_dt)),
+                    'start_dt': hash(str(self.start_dt)),
+                    'lag_mid_dt': hash(str(self.lag_mid_dt)),
+                    'mid_dt': hash(str(self.mid_dt)),
+                    'end_dt': hash(str(self.end_dt))}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
+    @property
+    def signature(self):
+        if self._signature is None:
+            raise Exception("Unholy Vice is not signed")
+        else:
+            return self._signature
+
+    def sign(self, incoming_chain, projector_hash):
+        signed = hash(incoming_chain + projector_hash)
+        self._signature = signed
+
+    def dump(self):
+        with open('../data/data_folds_hash/{0}.pkl'.format(self.signature), 'wb') as f:
+            pickle.dump(self, f)
+
+    def pump(self):
+        with open('../data/data_folds_hash/{0}.pkl'.format(self.signature), 'rb') as f:
+            return pickle.load(f)
+
+    def needs_pump(self):
+        result = self.signature and (self._values is not None)
+        return result
 
     @property
     def base_values(self):
@@ -217,6 +255,24 @@ class Projector:
                                  lag_mid_dt=new_lag_mid, mid_dt=v.mid_dt,
                                  end_dt=v.end_dt)
                                  """
+
+    @property
+    def parametrization(self):
+        dictated = {'ts_creator': self.ts_creator.parametrization_hash if self.ts_creator is not None else hash(None),
+                    'role': hash(self.role),
+                    '_agg_function': self._agg_function.parametrization_hash if self._agg_function is not None else hash(None),
+                    '_fill_function': self._fill_function.parametrization_hash if self._fill_function is not None else hash(None),
+                    '_app_function': self._app_function.parametrization_hash if self._app_function is not None else hash(None),
+                    'agg_function_kwg': hash(self.agg_function_kwg.values()) if self.agg_function_kwg is not None else hash(None),
+                    'fill_function_kwg': hash(self.fill_function_kwg.values()) if self.fill_function_kwg is not None else hash(None),
+                    'app_function_kwg': hash(self.app_function_kwg.values()) if self.app_function_kwg is not None else hash(None)}
+        return dictated
+
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
+
     def downcast(self, vices):
         """
         Decrease frequency with agg function
@@ -224,6 +280,8 @@ class Projector:
         :param vices:
         :return:
         """
+
+        input_hash = hash(tuple([x.signature for x in vices.values()]))
 
         name = list(vices.keys())[0]
         vice = vices[name]
@@ -258,12 +316,13 @@ class Projector:
         new_end = pandas.to_datetime([casted_second.index[-1]]).shift(1, freq=self.ts_creator.ts_frequency)[0].isoformat()
 
         joint = pandas.concat((new_series_first_agg, new_series_second_agg[new_series_second_agg.index >= new_mid]), axis=0)
+
         result_vice = UnholyVice(values=joint.values, index=joint.index,
                                  value_type=self.agg_function.value_type, ts_frequency=self.ts_creator.ts_frequency,
                                  lag_start_dt=new_lag_start, start_dt=new_start,
                                  lag_mid_dt=new_lag_mid, mid_dt=new_mid,
                                  end_dt=new_end)
-
+        result_vice.sign(incoming_chain=input_hash, projector_hash=self.parametrization_hash)
         return result_vice
     def control_missing(self, series):
         if pandas.isna(series).any():
@@ -275,6 +334,8 @@ class Projector:
         :param vices:
         :return:
         """
+
+        input_hash = hash(tuple([x.signature for x in vices.values()]))
 
         name = list(vices.keys())[0]
         vice = vices[name]
@@ -308,7 +369,7 @@ class Projector:
                                  lag_start_dt=new_lag_start, start_dt=new_start,
                                  lag_mid_dt=new_lag_mid, mid_dt=new_mid,
                                  end_dt=new_end)
-
+        result_vice.sign(incoming_chain=input_hash, projector_hash=self.parametrization_hash)
         return result_vice
 
     def control_duplicates(self, series):
@@ -322,6 +383,8 @@ class Projector:
         :param vices:
         :return:
         """
+
+        input_hash = hash(tuple([x.signature for x in vices.values()]))
 
         # there should be no duplicates and no missing
         for name in vices.keys():
@@ -355,7 +418,7 @@ class Projector:
                                  lag_start_dt=new_lag_start, start_dt=new_start,
                                  lag_mid_dt=new_lag_mid, mid_dt=new_mid,
                                  end_dt=new_end)
-
+        result_vice.sign(incoming_chain=input_hash, projector_hash=self.parametrization_hash)
         return result_vice
 
     def fit_transform(self, vs):
@@ -397,7 +460,18 @@ class Item:
 
         self._process_loader()
         self._process_series()
-
+    @property
+    def parametrization(self):
+        dictated = {'name': hash(self.name),
+                    'index': hash(str(self.series['DATE'].values)),
+                    'values': hash(str(self.series[self.name].values)),
+                    'value_type': hash(self.value_type),
+                    'ts_frequency': hash(self.ts_frequency),}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def _process_loader(self):
 
         self.loader = pandas.read_excel(self._loader_source)
@@ -430,6 +504,7 @@ class Item:
         # self.ts_calendar = name_in_controller['ts_calendar'].values[0]
 
     def to_vice(self):
+
         result = Vice(name=self.name,
                       values=self.series[self.name].values,
                       index=self.series[DataReadingConstants.DATE_COLUMN].values,
@@ -576,6 +651,8 @@ class FoldGenerator:
 
         x_train = []
         for name in features:
+            if self.path.stock[name].needs_pump():
+                self.path.stock[name] = self.path.stock[name].pump()
             snippet = self.path.stock[name].current_series_first
             snippet.name = name
             x_train.append(snippet)
@@ -610,8 +687,47 @@ class PathPreView:
         return result
     def grow_local(self, stock):
         parental_stock = {s: stock[s] for s in stock.keys() if s in self.parents}
-        resulting_unh_vice = self.path_pseudo_edges[self.ix].fit_transform(vs=parental_stock)
+        input_hash = hash(tuple([x.signature for x in parental_stock.values()]))
+        projector_hash = self.path_pseudo_edges[self.ix].parametrization_hash
+
+        if self.automaton_checker(input_hash=input_hash, projector_hash=projector_hash):
+            resulting_unh_vice = UnholyVice()
+            resulting_unh_vice.sign(incoming_chain=input_hash, projector_hash=projector_hash)
+        else:
+            resulting_unh_vice = self.path_pseudo_edges[self.ix].fit_transform(vs=parental_stock)
+            # resulting_unh_vice.sign(incoming_chain=input_hash, projector_hash=projector_hash)
+            resulting_hash = resulting_unh_vice.signature
+            self.automaton_writer(input_hash=input_hash, projector_hash=projector_hash, resulting_hash=resulting_hash)
+            resulting_unh_vice.dump()
         return resulting_unh_vice
+    def automaton_checker(self, input_hash, projector_hash):
+        d = '../data/other/chain_link.xlsx'
+        chain_link = pandas.read_excel(d)
+        mask = (chain_link['input_hash'] == input_hash) * (
+                chain_link['projector_hash'] == projector_hash
+        )
+        if mask.sum() == 0:
+            return False
+        elif mask.sum() == 1:
+            return True
+        else:
+            raise Exception("Too many records in the chainlink for {0} and {1}".format(input_hash, projector_hash))
+    def automaton_writer(self, input_hash, projector_hash, resulting_hash):
+        d = '../data/other/chain_link.xlsx'
+        chain_link = pandas.read_excel(d)
+        mask = (chain_link['input_hash'] == input_hash) * (
+                chain_link['projector_hash'] == projector_hash
+        )
+        if mask.sum() == 0:
+            appendix = pandas.DataFrame(data={'input_hash': [input_hash],
+                                              'projector_hash': [projector_hash],
+                                              'resulting_hash': [resulting_hash]})
+            chain_link = pandas.concat((chain_link, appendix), axis=0, ignore_index=True)
+            chain_link.to_excel(d, index=False)
+        elif mask.sum() == 1:
+            raise Exception('Trying to write while the record exists: {0}, {1}'.format(input_hash, projector_hash))
+        else:
+            raise Exception("Too many records in the chainlink for {0} and {1}".format(input_hash, projector_hash))
 
 
 class Path:
@@ -637,6 +753,10 @@ class Path:
         self.stock = {source.name: source.to_vice().to_unholy_vice(lag_start_dt=lag_start_dt, start_dt=start_dt, lag_mid_dt=lag_mid_dt, mid_dt=mid_dt, end_dt=end_dt) for source in sources}
         self.stock_new = {source.name: source.to_vice().to_unholy_vice(lag_start_dt=lag_start_dt, start_dt=start_dt, lag_mid_dt=lag_mid_dt, mid_dt=mid_dt, end_dt=end_dt) for source in sources}
         self.finish = False
+
+        for source in sources:
+            self.stock[source.name].sign(incoming_chain=source.parametrization_hash, projector_hash=self.stock[source.name].parametrization_hash)
+            self.stock_new[source.name].sign(incoming_chain=source.parametrization_hash, projector_hash=self.stock_new[source.name].parametrization_hash)
 
         while not self.finish:
 

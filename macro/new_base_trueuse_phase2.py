@@ -16,8 +16,8 @@ from new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path
 from functional import SomersD, pv_metric
 
 #
-loader_source = './data_meta/loader_pitch.xlsx'
-controller_source = './controller_pitch.xlsx'
+loader_source = '../data/data_meta/loader_pitch.xlsx'
+controller_source = '../data/other/controller_pitch.xlsx'
 
 controller = control(loader_source)
 controller.to_excel(controller_source, index=False)
@@ -58,8 +58,8 @@ drivers, measure_collector = [], []
 folds = []
 for fold_n in fg.folds:
     data_train, data_test = fg.fold(sources, features + [target], timeaxis, fold_n=fold_n)
-    data_train.to_excel('./data_folds/data_train_{0}.xlsx'.format(fold_n))
-    data_test.to_excel('./data_folds/data_test_{0}.xlsx'.format(fold_n))
+    data_train.to_excel('../data/data_folds/data_train_{0}.xlsx'.format(fold_n))
+    data_test.to_excel('../data/data_folds/data_test_{0}.xlsx'.format(fold_n))
     x_train, y_train = data_train[[x for x in data_train.columns if x != target]].iloc[:-1, :], data_train[target].iloc[1:]
     x_test, y_test = data_test[[x for x in data_test.columns if x != target]].iloc[:-1, :], data_test[target].iloc[1:]
 

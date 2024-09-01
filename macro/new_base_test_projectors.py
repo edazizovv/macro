@@ -183,6 +183,15 @@ class Stayer:
         self.impute_max = numpy.nan
         self.impute_min = numpy.nan
         self.wards = None
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('STAYER'),
+                    'value_type': hash(self.value_type)}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()
@@ -234,6 +243,19 @@ class Binner:
         self._binner_kwargs = {'encode': 'ordinal', 'strategy': 'quantile'}
         self.binner = None
         self.wards = None
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('Binner'),
+                    'n_bins': hash(str(self.n_bins)),
+                    'method': hash(self.method),
+                    'value_type': hash(self.value_type),
+                    '_binner': hash(self._binner),
+                    '_binner_kwargs': hash(self._binner_kwargs.values())}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()
@@ -305,6 +327,17 @@ class RangedPct:
         self.impute_max = numpy.nan
         self.impute_min = numpy.nan
         self.log = log
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('RangedPct'),
+                    'shift': hash(str(self.shift)),
+                    'value_type': hash(self.value_type),
+                    'log': hash(str(self.log))}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()
@@ -345,6 +378,22 @@ class WindowRollImpulse:
         self.impute_min = numpy.nan
         self.log = log
         self.train_stored = None
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('WindowRollImpulse'),
+                    'func': hash(self.func),
+                    'smaller_window': hash(str(self.smaller_window)),
+                    'bigger_window': hash(str(self.bigger_window)),
+                    'operation': hash(self.operation),
+                    'pct': hash(str(self.pct)),
+                    'shift': hash(str(self.shift)),
+                    'value_type': hash(self.value_type),
+                    'log': hash(str(self.log))}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()
@@ -470,6 +519,17 @@ class SimpleAggregator:
         self.func = func
         self.window = 0
         self.value_type = ValueTypes.CONTINUOUS
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('SimpleAggregator'),
+                    'func': hash(self.func),
+                    'window': hash(str(self.window)),
+                    'value_type': hash(self.value_type)}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         s = series_dict[list(series_dict.keys())[0]].copy()
@@ -490,6 +550,15 @@ class SimpleAggregator:
 class SimpleCasterAggMonth:
     def __init__(self):
         self.ts_frequency = 'MS'
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('SimpleCasterAggMonth'),
+                    'ts_frequency': hash(self.ts_frequency)}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def cast(self, x):
         casted = datetime.datetime(year=pandas.to_datetime(x).year, month=pandas.to_datetime(x).month, day=1, tzinfo=datetime.timezone.utc).isoformat()
         return casted
@@ -507,6 +576,21 @@ class UGMSklearnClass:
         self.value_type = ValueTypes.CONTINUOUS
         self.impute_max = numpy.nan
         self.impute_min = numpy.nan
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('UGMSklearnClass'),
+                    '_model': hash(self._model),
+                    'model_kwargs': hash(self.model_kwargs.values()),
+                    'window': hash(str(self.window)),
+                    'forward': hash(str(self.forward)),
+                    'log': hash(str(self.log)),
+                    'pca': hash(str(self.pca)),
+                    'value_type': hash(self.value_type)}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()
@@ -583,6 +667,21 @@ class UGMARIMAClass:
         self.impute_max = numpy.nan
         self.impute_min = numpy.nan
         self.y_project_first_series = None
+    @property
+    def parametrization(self):
+        dictated = {'name': hash('UGMARIMAClass'),
+                    '_model': hash(self._model),
+                    'model_kwargs': hash(self.model_kwargs.values()),
+                    'window': hash(str(self.window)),
+                    'forward': hash(str(self.forward)),
+                    'log': hash(str(self.log)),
+                    'pca': hash(str(self.pca)),
+                    'value_type': hash(self.value_type)}
+        return dictated
+    @property
+    def parametrization_hash(self):
+        hashed = hash(self.parametrization.values())
+        return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()

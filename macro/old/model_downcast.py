@@ -5,9 +5,8 @@
 import numpy
 import scipy
 import pandas
-from sklearn.linear_model import enet_path, LinearRegression, ElasticNetCV
+from sklearn.linear_model import enet_path, ElasticNetCV
 from matplotlib import pyplot
-from sklearn.model_selection import train_test_split
 from newborn import FrameOld
 from sklearn.metrics import r2_score
 from sklearn.exceptions import ConvergenceWarning
@@ -16,7 +15,7 @@ import warnings
 import time
 from functools import partial
 from scipy.stats import kendalltau   # , somersd
-from functional import SomersD as somersd
+from macro.macro.functional import SomersD as somersd
 from statsmodels.tsa.seasonal import MSTL
 
 # rs = 999
@@ -737,7 +736,6 @@ for j in range(n):
     y_train = result.loc[y_ix_train, target].values
     x_test = result.loc[x_ix_test, x_base].values
     y_test = result.loc[y_ix_test, target].values
-    from sklearn.ensemble import RandomForestRegressor
     lm = LinearRegression()
     # lm = RandomForestRegressor()
     lm.fit(X=x_train, y=y_train)

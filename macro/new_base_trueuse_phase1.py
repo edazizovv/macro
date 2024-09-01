@@ -16,8 +16,8 @@ from new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path
 from functional import SomersD, pv_metric
 
 #
-loader_source = './data_meta/loader_pitch.xlsx'
-controller_source = './controller_pitch.xlsx'
+loader_source = '../data/data_meta/loader_pitch.xlsx'
+controller_source = '../data/other/controller_pitch.xlsx'
 
 controller = control(loader_source)
 controller.to_excel(controller_source, index=False)

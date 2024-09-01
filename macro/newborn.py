@@ -76,7 +76,7 @@ class ElementOld:
 
 
 class Frame:
-    def __init__(self, d='./data/'):
+    def __init__(self, d='../data/data/'):
         self.d = d
         self.elements = []
 
@@ -102,7 +102,7 @@ class Frame:
 
 
 class FrameOld:
-    def __init__(self, d='./data/'):
+    def __init__(self, d='../data/data/'):
         self.d = d
         self.elements = []
 

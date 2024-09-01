@@ -15,14 +15,14 @@ from new_base_test_projectors_translate import a_function_translator, a_function
 
 
 #
-loader_source = './data_meta/loader_pitch.xlsx'
-controller_source = './controller_pitch.xlsx'
+loader_source = '../data/data_meta/loader_pitch.xlsx'
+controller_source = '../data/other/controller_pitch.xlsx'
 
 controller = control(loader_source)
 controller.to_excel(controller_source, index=False)
 
-source_xl = pandas.read_excel('./data_meta/vector.xlsx', sheet_name='sources')
-path_xl = pandas.read_excel('./data_meta/vector.xlsx', sheet_name='prog')
+source_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='sources')
+path_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='prog')
 
 sources = ([Item(name='TLT', loader_source=loader_source, controller_source=controller_source)] +
            [Item(name=x, loader_source=loader_source, controller_source=controller_source) for x in source_xl['source'].values if x in path_xl['vertices_in'].values])
@@ -72,7 +72,7 @@ for j in range(path_xl.shape[0]):
 
 features = path_xl.loc[path_xl['active'] == 'Y', 'vertices_out'].values.tolist()
 
-vxl = pandas.read_excel('./data_meta/vincent.xlsx', sheet_name='mobsters')
+vxl = pandas.read_excel('../data/data_meta/vincent.xlsx', sheet_name='mobsters')
 name_list = vxl['transform_name'].values.tolist()
 param_list = []
 

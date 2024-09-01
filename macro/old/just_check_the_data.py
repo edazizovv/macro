@@ -5,18 +5,14 @@
 import numpy
 import scipy
 import pandas
-from sklearn.linear_model import enet_path, LinearRegression
+from sklearn.linear_model import enet_path
 from matplotlib import pyplot
-from sklearn.model_selection import train_test_split
 from newborn import FrameOld
 from sklearn.metrics import r2_score
-from sklearn.exceptions import ConvergenceWarning
 # ConvergenceWarning('ignore')
-import warnings
 import time
 from functools import partial
 from scipy.stats import kendalltau   # , somersd
-from functional import SomersD as somersd
 
 from statsmodels.tsa.seasonal import MSTL
 
