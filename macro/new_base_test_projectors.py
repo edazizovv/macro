@@ -185,12 +185,12 @@ class Stayer:
         self.wards = None
     @property
     def parametrization(self):
-        dictated = {'name': hash('STAYER'),
-                    'value_type': hash(self.value_type)}
+        dictated = tuple([hash('STAYER'),
+                          hash(self.value_type)])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
@@ -245,16 +245,16 @@ class Binner:
         self.wards = None
     @property
     def parametrization(self):
-        dictated = {'name': hash('Binner'),
-                    'n_bins': hash(str(self.n_bins)),
-                    'method': hash(self.method),
-                    'value_type': hash(self.value_type),
-                    '_binner': hash(self._binner),
-                    '_binner_kwargs': hash(self._binner_kwargs.values())}
+        dictated = tuple([hash('Binner'),
+                          hash(str(self.n_bins)),
+                          hash(self.method),
+                          hash(self.value_type),
+                          hash(self._binner),
+                          hash(self._binner_kwargs.values())])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
@@ -329,14 +329,14 @@ class RangedPct:
         self.log = log
     @property
     def parametrization(self):
-        dictated = {'name': hash('RangedPct'),
-                    'shift': hash(str(self.shift)),
-                    'value_type': hash(self.value_type),
-                    'log': hash(str(self.log))}
+        dictated = tuple([hash('RangedPct'),
+                          hash(str(self.shift)),
+                          hash(self.value_type),
+                          hash(str(self.log))])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
@@ -380,19 +380,19 @@ class WindowRollImpulse:
         self.train_stored = None
     @property
     def parametrization(self):
-        dictated = {'name': hash('WindowRollImpulse'),
-                    'func': hash(self.func),
-                    'smaller_window': hash(str(self.smaller_window)),
-                    'bigger_window': hash(str(self.bigger_window)),
-                    'operation': hash(self.operation),
-                    'pct': hash(str(self.pct)),
-                    'shift': hash(str(self.shift)),
-                    'value_type': hash(self.value_type),
-                    'log': hash(str(self.log))}
+        dictated = tuple([hash('WindowRollImpulse'),
+                          hash(self.func),
+                          hash(str(self.smaller_window)),
+                          hash(str(self.bigger_window)),
+                          hash(self.operation),
+                          hash(str(self.pct)),
+                          hash(str(self.shift)),
+                          hash(self.value_type),
+                          hash(str(self.log))])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
@@ -521,14 +521,14 @@ class SimpleAggregator:
         self.value_type = ValueTypes.CONTINUOUS
     @property
     def parametrization(self):
-        dictated = {'name': hash('SimpleAggregator'),
-                    'func': hash(self.func),
-                    'window': hash(str(self.window)),
-                    'value_type': hash(self.value_type)}
+        dictated = tuple([hash('SimpleAggregator'),
+                          hash(self.func),
+                          hash(str(self.window)),
+                          hash(self.value_type)])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
@@ -552,12 +552,12 @@ class SimpleCasterAggMonth:
         self.ts_frequency = 'MS'
     @property
     def parametrization(self):
-        dictated = {'name': hash('SimpleCasterAggMonth'),
-                    'ts_frequency': hash(self.ts_frequency)}
+        dictated = tuple([hash('SimpleCasterAggMonth'),
+                          hash(self.ts_frequency)])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def cast(self, x):
         casted = datetime.datetime(year=pandas.to_datetime(x).year, month=pandas.to_datetime(x).month, day=1, tzinfo=datetime.timezone.utc).isoformat()
@@ -578,18 +578,18 @@ class UGMSklearnClass:
         self.impute_min = numpy.nan
     @property
     def parametrization(self):
-        dictated = {'name': hash('UGMSklearnClass'),
-                    '_model': hash(self._model),
-                    'model_kwargs': hash(self.model_kwargs.values()),
-                    'window': hash(str(self.window)),
-                    'forward': hash(str(self.forward)),
-                    'log': hash(str(self.log)),
-                    'pca': hash(str(self.pca)),
-                    'value_type': hash(self.value_type)}
+        dictated = tuple([hash('UGMSklearnClass'),
+                          hash(self._model),
+                          hash(self.model_kwargs.values()),
+                          hash(str(self.window)),
+                          hash(str(self.forward)),
+                          hash(str(self.log)),
+                          hash(str(self.pca)),
+                          hash(self.value_type)])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1
@@ -669,18 +669,18 @@ class UGMARIMAClass:
         self.y_project_first_series = None
     @property
     def parametrization(self):
-        dictated = {'name': hash('UGMARIMAClass'),
-                    '_model': hash(self._model),
-                    'model_kwargs': hash(self.model_kwargs.values()),
-                    'window': hash(str(self.window)),
-                    'forward': hash(str(self.forward)),
-                    'log': hash(str(self.log)),
-                    'pca': hash(str(self.pca)),
-                    'value_type': hash(self.value_type)}
+        dictated = tuple([hash('UGMARIMAClass'),
+                          hash(self._model),
+                          hash(self.model_kwargs.values()),
+                          hash(str(self.window)),
+                          hash(str(self.forward)),
+                          hash(str(self.log)),
+                          hash(str(self.pca)),
+                          hash(self.value_type)])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
         assert len(list(series_dict.keys())) == 1

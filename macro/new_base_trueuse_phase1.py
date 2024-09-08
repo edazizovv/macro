@@ -34,6 +34,7 @@ Stage -1: Fold generator set-up
 """
 
 n_folds = 10
+# n_folds = 2
 joint_lag = 12
 val_rate = 0.5
 overlap_rate = 0.15

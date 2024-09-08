@@ -24,8 +24,7 @@ controller.to_excel(controller_source, index=False)
 source_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='sources')
 path_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='prog')
 
-sources = ([Item(name='TLT', loader_source=loader_source, controller_source=controller_source)] +
-           [Item(name=x, loader_source=loader_source, controller_source=controller_source) for x in source_xl['source'].values if x in path_xl['vertices_in'].values])
+sources = ([Item(name=x, loader_source=loader_source, controller_source=controller_source) for x in source_xl['source'].values if x in path_xl['vertices_in'].values])
 
 
 vertices_out = path_xl['vertices_out'].values

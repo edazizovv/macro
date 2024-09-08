@@ -14,6 +14,10 @@ from new_constants import DataReadingConstants, SystemFilesSignatures, Routing
 
 
 #
+def my_hex(x):
+    return hashlib.sha256(str(x).encode('UTF-8')).hexdigest()
+
+
 class Phaser:
 
     def __init__(self, fg, sources, target, timeaxis, master_mobster, roller_mobsters):
@@ -79,30 +83,48 @@ class UnholyVice:
 
         self.name = name
         self._values = values
-        self._index = pandas.to_datetime(index).to_series().apply(func=lambda x: x.isoformat()).values
+        if index is not None:
+            self._index = pandas.to_datetime(index).to_series().apply(func=lambda x: x.isoformat()).values
+        else:
+            self._index = index
         self.value_type = value_type
         self.ts_frequency = ts_frequency
         self._series = pandas.Series(data=self._values, index=self._index)
 
-        self.lag_start_dt = pandas.to_datetime(lag_start_dt).isoformat()
-        self.start_dt = pandas.to_datetime(start_dt).isoformat()
-        self.lag_mid_dt = pandas.to_datetime(lag_mid_dt).isoformat()
-        self.mid_dt = pandas.to_datetime(mid_dt).isoformat()
-        self.end_dt = pandas.to_datetime(end_dt).isoformat()
+        if lag_start_dt is not None:
+            self.lag_start_dt = pandas.to_datetime(lag_start_dt).isoformat()
+        else:
+            self.lag_start_dt = None
+        if start_dt is not None:
+            self.start_dt = pandas.to_datetime(start_dt).isoformat()
+        else:
+            self.start_dt = None
+        if lag_mid_dt is not None:
+            self.lag_mid_dt = pandas.to_datetime(lag_mid_dt).isoformat()
+        else:
+            self.lag_mid_dt = None
+        if mid_dt is not None:
+            self.mid_dt = pandas.to_datetime(mid_dt).isoformat()
+        else:
+            self.mid_dt = None
+        if end_dt is not None:
+            self.end_dt = pandas.to_datetime(end_dt).isoformat()
+        else:
+            self.end_dt = None
 
         self._signature = None
 
     @property
     def parametrization(self):
-        dictated = {'lag_start_dt': hash(str(self.lag_start_dt)),
-                    'start_dt': hash(str(self.start_dt)),
-                    'lag_mid_dt': hash(str(self.lag_mid_dt)),
-                    'mid_dt': hash(str(self.mid_dt)),
-                    'end_dt': hash(str(self.end_dt))}
+        dictated = tuple([my_hex(self.lag_start_dt),
+                          my_hex(self.start_dt),
+                          my_hex(self.lag_mid_dt),
+                          my_hex(self.mid_dt),
+                          my_hex(self.end_dt)])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = my_hex(self.parametrization)
         return hashed
     @property
     def signature(self):
@@ -112,7 +134,7 @@ class UnholyVice:
             return self._signature
 
     def sign(self, incoming_chain, projector_hash):
-        signed = hash(incoming_chain + projector_hash)
+        signed = my_hex(incoming_chain + projector_hash)
         self._signature = signed
 
     def dump(self):
@@ -124,7 +146,8 @@ class UnholyVice:
             return pickle.load(f)
 
     def needs_pump(self):
-        result = self.signature and (self._values is not None)
+        assert self.signature
+        result = self._values is None
         return result
 
     @property
@@ -258,19 +281,19 @@ class Projector:
 
     @property
     def parametrization(self):
-        dictated = {'ts_creator': self.ts_creator.parametrization_hash if self.ts_creator is not None else hash(None),
-                    'role': hash(self.role),
-                    '_agg_function': self._agg_function.parametrization_hash if self._agg_function is not None else hash(None),
-                    '_fill_function': self._fill_function.parametrization_hash if self._fill_function is not None else hash(None),
-                    '_app_function': self._app_function.parametrization_hash if self._app_function is not None else hash(None),
-                    'agg_function_kwg': hash(self.agg_function_kwg.values()) if self.agg_function_kwg is not None else hash(None),
-                    'fill_function_kwg': hash(self.fill_function_kwg.values()) if self.fill_function_kwg is not None else hash(None),
-                    'app_function_kwg': hash(self.app_function_kwg.values()) if self.app_function_kwg is not None else hash(None)}
+        agg_function = self._agg_function(**self.agg_function_kwg) if self._agg_function is not None else None
+        fill_function = self._fill_function(**self.fill_function_kwg) if self._fill_function is not None else None
+        app_function = self._app_function(**self.app_function_kwg) if self._app_function is not None else None
+        dictated = tuple([self.ts_creator.parametrization_hash if self.ts_creator is not None else my_hex(None),
+                          my_hex(self.role),
+                          agg_function.parametrization_hash if agg_function is not None else my_hex(None),
+                          fill_function.parametrization_hash if fill_function is not None else my_hex(None),
+                          app_function.parametrization_hash if app_function is not None else my_hex(None)])
         return dictated
 
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = my_hex(self.parametrization)
         return hashed
 
     def downcast(self, vices):
@@ -281,7 +304,7 @@ class Projector:
         :return:
         """
 
-        input_hash = hash(tuple([x.signature for x in vices.values()]))
+        input_hash = my_hex(tuple([x.signature for x in vices.values()]))
 
         name = list(vices.keys())[0]
         vice = vices[name]
@@ -335,7 +358,7 @@ class Projector:
         :return:
         """
 
-        input_hash = hash(tuple([x.signature for x in vices.values()]))
+        input_hash = my_hex(tuple([x.signature for x in vices.values()]))
 
         name = list(vices.keys())[0]
         vice = vices[name]
@@ -384,7 +407,7 @@ class Projector:
         :return:
         """
 
-        input_hash = hash(tuple([x.signature for x in vices.values()]))
+        input_hash = my_hex(tuple([x.signature for x in vices.values()]))
 
         # there should be no duplicates and no missing
         for name in vices.keys():
@@ -462,15 +485,17 @@ class Item:
         self._process_series()
     @property
     def parametrization(self):
-        dictated = {'name': hash(self.name),
-                    'index': hash(str(self.series['DATE'].values)),
-                    'values': hash(str(self.series[self.name].values)),
-                    'value_type': hash(self.value_type),
-                    'ts_frequency': hash(self.ts_frequency),}
+        date_hash = hashlib.sha256(pandas.util.hash_pandas_object(self.series['DATE'], index=False).values).hexdigest()
+        value_hash = hashlib.sha256(pandas.util.hash_pandas_object(self.series[self.name], index=False).values).hexdigest()
+        dictated = tuple([my_hex(self.name),
+                          my_hex(self.series['DATE'].values),
+                          my_hex(self.series[self.name].values),
+                          my_hex(self.value_type),
+                          my_hex(self.ts_frequency)])
         return dictated
     @property
     def parametrization_hash(self):
-        hashed = hash(self.parametrization.values())
+        hashed = my_hex(self.parametrization)
         return hashed
     def _process_loader(self):
 
@@ -687,7 +712,7 @@ class PathPreView:
         return result
     def grow_local(self, stock):
         parental_stock = {s: stock[s] for s in stock.keys() if s in self.parents}
-        input_hash = hash(tuple([x.signature for x in parental_stock.values()]))
+        input_hash = my_hex(tuple([x.signature for x in parental_stock.values()]))
         projector_hash = self.path_pseudo_edges[self.ix].parametrization_hash
 
         if self.automaton_checker(input_hash=input_hash, projector_hash=projector_hash):
@@ -701,8 +726,12 @@ class PathPreView:
             resulting_unh_vice.dump()
         return resulting_unh_vice
     def automaton_checker(self, input_hash, projector_hash):
+        input_hash = str(input_hash)
+        projector_hash = str(projector_hash)
         d = '../data/other/chain_link.xlsx'
         chain_link = pandas.read_excel(d)
+        chain_link['input_hash'] = chain_link['input_hash'].astype(dtype=str)
+        chain_link['projector_hash'] = chain_link['projector_hash'].astype(dtype=str)
         mask = (chain_link['input_hash'] == input_hash) * (
                 chain_link['projector_hash'] == projector_hash
         )
@@ -713,8 +742,14 @@ class PathPreView:
         else:
             raise Exception("Too many records in the chainlink for {0} and {1}".format(input_hash, projector_hash))
     def automaton_writer(self, input_hash, projector_hash, resulting_hash):
+        input_hash = str(input_hash)
+        projector_hash = str(projector_hash)
+        resulting_hash = str(resulting_hash)
         d = '../data/other/chain_link.xlsx'
         chain_link = pandas.read_excel(d)
+        chain_link['input_hash'] = chain_link['input_hash'].astype(dtype=str)
+        chain_link['projector_hash'] = chain_link['projector_hash'].astype(dtype=str)
+        chain_link['resulting_hash'] = chain_link['resulting_hash'].astype(dtype=str)
         mask = (chain_link['input_hash'] == input_hash) * (
                 chain_link['projector_hash'] == projector_hash
         )
