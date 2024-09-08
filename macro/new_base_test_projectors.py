@@ -1,5 +1,6 @@
 #
 import json
+import time
 import datetime
 
 #
@@ -31,8 +32,8 @@ class VincentClassMobsterS:
 
             fg_local = fg.copy()
 
-            local_path_vertices, local_path_matrix, local_path_pseudo_edges = self.mobsters[key].supply(fg=fg)
-            fg_local.init_path(local_path_vertices, local_path_matrix, local_path_pseudo_edges)
+            local_path_vertices, local_path_matrix, local_path_pseudo_edges, savers = self.mobsters[key].supply(fg=fg)
+            fg_local.init_path(local_path_vertices, local_path_matrix, local_path_pseudo_edges, savers)
 
             for fold_n in fg_local.folds:
                 local_sources = [x for x in sources if (x.name == self.mobsters[key].target_source) or (x.name == self.mobsters[key].name)]
@@ -99,6 +100,8 @@ class VincentClassMobster:
         n_targets = target_components_mask.sum()
 
         local_path_vertices = path_vertices_sub_target + [self.name] + self.features
+        savers = [True] * len(path_vertices_sub_target) + [True] + [False] * len(self.features)
+        savers = numpy.array(savers)
         local_path_matrix = numpy.zeros(shape=((len(self.name_list) + 1 + n_targets), (len(self.name_list) + 1 + n_targets)))
 
         targets_mask = numpy.arange(n_targets)
@@ -108,7 +111,7 @@ class VincentClassMobster:
 
         local_path_pseudo_edges = path_pseudo_edges_sub_target + [None] + [self._projector(**self.param_list[j]) for j in range(len(self.param_list))]
 
-        return local_path_vertices, local_path_matrix, local_path_pseudo_edges
+        return local_path_vertices, local_path_matrix, local_path_pseudo_edges, savers
 
 
     def pull(self, fold_n, x_train, y_train, x_test, y_test):

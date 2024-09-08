@@ -42,7 +42,8 @@ fg = FoldGenerator(n_folds=n_folds, joint_lag=joint_lag, val_rate=val_rate, over
 
 target = 'TLT_aggmean_pct'
 
-fg.init_path(path_vertices, path_matrix, path_pseudo_edges)
+savers = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
+fg.init_path(path_vertices, path_matrix, path_pseudo_edges, savers)
 
 timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime('2007-01-01').isoformat()]
 
