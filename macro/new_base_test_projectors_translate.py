@@ -11,7 +11,7 @@ from sklearn.linear_model import LinearRegression, ElasticNet
 
 
 #
-from new_base_test_projectors import SimpleAggregator, WindowRollImpulse, RangedPct, Stayer, Binner, UGMARIMAClass, UGMSklearnClass, AutoArima, DefiniteArima
+from macro.new_base_test_projectors import SimpleAggregator, WindowRollImpulse, RangedPct, Stayer, Binner, UGMARIMAClass, UGMSklearnClass, AutoArima, DefiniteArima
 
 
 #

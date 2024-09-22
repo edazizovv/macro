@@ -7,9 +7,9 @@ import pandas
 
 
 #
-from new_base import Path, Projector, Item, FoldGenerator
-from new_base_test_projectors import WindowAppGenerator
-from new_data_check import control, controller_view
+from macro.new_base import Path, Projector, Item, FoldGenerator
+from macro.new_base_test_projectors import WindowAppGenerator
+from macro.new_data_check import control, controller_view
 
 
 #

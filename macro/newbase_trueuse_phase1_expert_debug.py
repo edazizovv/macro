@@ -4,10 +4,10 @@ import scipy
 import numpy
 import pandas
 
-from new_base import Path, Projector, Item, FoldGenerator
+from macro.new_base import Path, Projector, Item, FoldGenerator
 
-from new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
-from functional import SomersD, pv_metric
+from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
+from macro.functional import SomersD, pv_metric
 
 n_folds = 10
 joint_lag = 12

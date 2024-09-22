@@ -8,10 +8,10 @@ import pandas
 
 
 #
-from new_base import Path, Projector, Item, FoldGenerator
-from new_base_test_projectors import WindowRollImpulse, SimpleAggregator, SimpleCasterAggMonth
-from new_data_check import control, controller_view
-from new_base_test_projectors_translate import a_function_translator, a_function_kwg_translator
+from macro.new_base import Path, Projector, Item, FoldGenerator
+from macro.new_base_test_projectors import WindowRollImpulse, SimpleAggregator, SimpleCasterAggMonth
+from macro.new_data_check import control, controller_view
+from macro.new_base_test_projectors_translate import a_function_translator, a_function_kwg_translator
 
 
 #

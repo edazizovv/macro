@@ -7,7 +7,7 @@ import pandas
 
 
 #
-from new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
+from macro.new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
 
 
 #

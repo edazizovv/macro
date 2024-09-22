@@ -1,23 +1,31 @@
 #
 import json
 import time
+import copy
 import datetime
+import warnings
 
 #
 import numpy
 import pandas
+import pmdarima
 from scipy import stats
 from sklearn.preprocessing import KBinsDiscretizer
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.stattools import kpss
+# from statsmodels.tools.sm_exceptions import InterpolationWarning, ConvergenceWarning
 
 
 #
-from new_base import UnholyVice
-from new_constants import ValueTypes
+from macro.new_base import UnholyVice
+from macro.new_constants import ValueTypes
 
 
 #
+# warnings.simplefilter('ignore', InterpolationWarning)
+# warnings.simplefilter('ignore', ConvergenceWarning)
+
+
 class VincentClassMobsterS:
 
     def __init__(self, x_factors_in, target, target_source, target_transform, name_list, param_list, projector, performer=None, stabilizer=None):
@@ -686,6 +694,7 @@ class UGMARIMAClass:
         hashed = hash(self.parametrization)
         return hashed
     def project_first(self, series_dict):
+        run_time = time.time()
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()
         name = result.name
@@ -701,30 +710,39 @@ class UGMARIMAClass:
         result[mask_negative_inf] = self.impute_min
         y = result.iloc[1:].copy()
         self.model = self._model(window=self.window, **self.model_kwargs)
+        run_time = time.time() - run_time
+        print('prep', run_time)
+        run_time = time.time()
         self.model.fit(y=y)
+        run_time = time.time() - run_time
+        print('fit', run_time)
+        run_time = time.time()
         y_hat = self.model.predict(y=y)[1:]
         y_forecast = self.model.forecast(y=y)
         y_hat = numpy.concatenate((y_hat, numpy.array([y_forecast])))
         result = result.copy()
         result.iloc[1:] = y_hat.astype(dtype=result.dtype)
+        run_time = time.time() - run_time
+        print('cast', run_time)
         return result
     def project_second(self, series_dict):
         assert len(list(series_dict.keys())) == 1
         result = series_dict[list(series_dict.keys())[0]].copy()
         name = result.name
+        result_ = pandas.concat((self.y_project_first_series, result), ignore_index=False)
+        if self.log:
+            result_ = result_.pct_change()
+            result_ = (result_ + 1).apply(func=numpy.log)
+        mask_positive_inf = result_ == numpy.inf
+        mask_negative_inf = result_ == -numpy.inf
+        result_[mask_positive_inf] = self.impute_max
+        result_[mask_negative_inf] = self.impute_min
+        appendix = result_.iloc[self.y_project_first_series.shape[0]:]
+        model_copy = self.model.copy()
         forecasted = []
-        for i in range(result.shape[0]):
-            result_ = pandas.concat((self.y_project_first_series.iloc[i+1:],
-                                     result.iloc[:i+1]), ignore_index=False)
-            if self.log:
-                result_ = result_.pct_change()
-                result_ = (result_ + 1).apply(func=numpy.log)
-            mask_positive_inf = result_ == numpy.inf
-            mask_negative_inf = result_ == -numpy.inf
-            result_[mask_positive_inf] = self.impute_max
-            result_[mask_negative_inf] = self.impute_min
-            y = result_.iloc[1:].copy()
-            y_hat_i = self.model.forecast(y=y)
+        for j in range(appendix.shape[0]):
+            model_copy.update(appendix.iloc[[j]])
+            y_hat_i = model_copy.forecast(None)
             forecasted.append(y_hat_i)
         result = result.copy()
         result = pandas.Series(data=forecasted, index=result.index)
@@ -748,8 +766,7 @@ def refactor_trend_code(trend):
 
 class AutoArima:
     """
-    AutoArima implementation following the algorithm outlined in https://otexts.com/fpp2/arima-r.html
-    (with some minor adjustments)
+    AutoArima implementation from pmdarima
 
     No seasonal component is considered
 
@@ -765,169 +782,37 @@ class AutoArima:
         self.fitted_trend = None
     def fit(self, y):
 
-        # identify d
+        model = pmdarima.auto_arima(y.values, start_p=0, start_q=0,
+                                    max_order=self.max_window, seasonal=False,
+                                    stepwise=True, suppress_warnings=True,
+                                    error_action='warn', method='nm')
 
-        # codes: t_d0, c_d0, c_d1, n(c)_d2
-        kpss_result = pandas.DataFrame(index=['t_d0', 'c_d0', 'c_d1', 'n_d2'],
-                                       columns=['kpss_values', 'kpss_trend', 'd'],
-                                       data=[[numpy.nan, 'ct', 0],
-                                             [numpy.nan, 'c', 0],
-                                             [numpy.nan, 'c', 1],
-                                             [numpy.nan, 'c', 2]])
-        for ix in kpss_result.index:
-            yy = y.copy()
-            kpss_d = kpss_result.loc[ix, 'd']
-            for j in range(kpss_d):
-                yy = yy.diff()
-            yy = yy.dropna().values
-            kpss_trend = kpss_result.loc[ix, 'kpss_trend']
-            try:
-                kpss_output = kpss(x=yy, regression=kpss_trend, nlags='auto')
-            except OverflowError:
-                try:
-                    kpss_output = kpss(x=yy, regression=kpss_trend, nlags='legacy')
-                except Exception as e:
-                    raise e
-            except Exception as e:
-                raise e
-            kpss_result.loc[ix, 'kpss_values'] = kpss_output[1]
-        i = kpss_result['kpss_values'].argmax()
-        d, alternative_trend = kpss_result['d'].values[i], kpss_result['kpss_trend'].values[i]
+        # self.fitted_p = current_p
+        # self.fitted_d = d
+        # self.fitted_q = current_q
+        # self.fitted_trend = current_trend
+        # self.arima = self._arima(endog=y.values, order=(current_p, d, current_q), trend=refactor_trend_code(current_trend),
+        #                          seasonal_order=(0, 0, 0, 0)).fit()
 
-        # first examination
-
-        # codes: 0_d_0, 2_d_2, 1_d_0, 0_d_1, [0_d_0 -n]
-
-        if alternative_trend == 'ct':
-            arima_results = pandas.DataFrame(columns=['aic', 'p', 'q', 'trend'],
-                                             data=[[numpy.nan, 0, 0, 'ct'],
-                                                   [numpy.nan, 2, 2, 'ct'],
-                                                   [numpy.nan, 1, 0, 'ct'],
-                                                   [numpy.nan, 0, 1, 'ct'],
-                                                   [numpy.nan, 0, 0, 'c'],
-                                                   [numpy.nan, 2, 2, 'c'],
-                                                   [numpy.nan, 1, 0, 'c'],
-                                                   [numpy.nan, 0, 1, 'c'],
-                                                   [numpy.nan, 0, 0, 'n']])
-        elif d == 0:
-            arima_results = pandas.DataFrame(columns=['aic', 'p', 'q', 'trend'],
-                                             data=[[numpy.nan, 0, 0, 'c'],
-                                                   [numpy.nan, 2, 2, 'c'],
-                                                   [numpy.nan, 1, 0, 'c'],
-                                                   [numpy.nan, 0, 1, 'c'],
-                                                   [numpy.nan, 0, 0, 'n']])
-        elif d == 1:
-            arima_results = pandas.DataFrame(columns=['aic', 'p', 'q', 'trend'],
-                                             data=[[numpy.nan, 0, 0, 't'],
-                                                   [numpy.nan, 2, 2, 't'],
-                                                   [numpy.nan, 1, 0, 't'],
-                                                   [numpy.nan, 0, 1, 't'],
-                                                   [numpy.nan, 0, 0, 'n']])
-        else:
-            arima_results = pandas.DataFrame(columns=['aic', 'p', 'q', 'trend'],
-                                             data=[[numpy.nan, 0, 0, 't2'],
-                                                   [numpy.nan, 2, 2, 't2'],
-                                                   [numpy.nan, 1, 0, 't2'],
-                                                   [numpy.nan, 0, 1, 't2']])
-
-        for i in range(arima_results.shape[0]):
-            p = arima_results['p'].values[i]
-            q = arima_results['q'].values[i]
-            trend = arima_results['trend'].values[i]
-            arima = self._arima(endog=y.values, order=(p, d, q), trend=refactor_trend_code(trend), seasonal_order=(0, 0, 0, 0))
-            arima_res = arima.fit()
-            arima_results.loc[arima_results.index[i], 'aic'] = arima_res.aic
-        i = arima_results['aic'].argmin()
-        current_aic = arima_results['aic'].values[i]
-        current_p = arima_results['p'].values[i]
-        current_q = arima_results['q'].values[i]
-        current_trend = arima_results['trend'].values[i]
-
-        # loops
-
-        finish = False
-        while not finish:
-
-            max_pq = self.max_window - max(d, current_p, current_q)
-
-            # codes: (p+1, q), (p-1, q), (p, q+1), (p, q-1), all those without c
-            data = []
-            if current_p > 1:
-                data_append = [[numpy.nan, current_p - 1, current_q, current_trend]]
-                data += data_append
-            if current_p < max_pq:
-                data_append = [[numpy.nan, current_p + 1, current_q, current_trend]]
-                data += data_append
-            if current_q > 1:
-                data_append = [[numpy.nan, current_p, current_q - 1, current_trend]]
-                data += data_append
-            if current_q < max_pq:
-                data_append = [[numpy.nan, current_p, current_q + 1, current_trend]]
-                data += data_append
-            if current_trend != 'n':
-                data_append_n = []
-                for z in data:
-                    zz = list(z)
-                    zz[-1] = 'n'
-                    data_append_n += [zz]
-                data_append_c = []
-                if current_trend == 'ct':
-                    for z in data:
-                        zz = list(z)
-                        zz[-1] = 'c'
-                        data_append_c += [zz]
-                data += data_append_n
-                data += data_append_c
-            else:
-                data_append_c = []
-                for z in data:
-                    zz = list(z)
-                    zz[-1] = 'c' if d == 0 else 't' if d == 1 else 't2'
-                    data_append_c += [zz]
-                data += data_append_c
-            arima_results = pandas.DataFrame(columns=['aic', 'p', 'q', 'trend'],
-                                             data=data)
-
-            for i in range(arima_results.shape[0]):
-                p = arima_results['p'].values[i]
-                q = arima_results['q'].values[i]
-                trend = arima_results['trend'].values[i]
-                arima = self._arima(endog=y.values, order=(p, d, q), trend=refactor_trend_code(trend), seasonal_order=(0, 0, 0, 0))
-                arima_res = arima.fit()
-                arima_results.loc[arima_results.index[i], 'aic'] = arima_res.aic
-            i = arima_results['aic'].argmin()
-            candidate_aic = arima_results['aic'].values[i]
-
-            if candidate_aic <= current_aic:
-                current_aic = candidate_aic
-                current_p = arima_results['p'].values[i]
-                current_q = arima_results['q'].values[i]
-                current_trend = arima_results['trend'].values[i]
-            else:
-                finish = True
-
-        self.fitted_p = current_p
-        self.fitted_d = d
-        self.fitted_q = current_q
-        self.fitted_trend = current_trend
-        self.arima = self._arima(endog=y.values, order=(current_p, d, current_q), trend=refactor_trend_code(current_trend),
-                                 seasonal_order=(0, 0, 0, 0)).fit()
+        self.arima = copy.deepcopy(model)
 
     def predict(self, y):
 
-        self.arima = self._arima(endog=y.values, order=(self.fitted_p, self.fitted_d, self.fitted_q), trend=refactor_trend_code(self.fitted_trend),
-                                 seasonal_order=(0, 0, 0, 0)).fit()
-
-        prediction = self.arima.predict()
+        prediction = self.arima.predict_in_sample(dynamic=False)
         return prediction
+
+    def update(self, y):
+
+        self.arima.update(y)
 
     def forecast(self, y):
 
-        self.arima = self._arima(endog=y.values, order=(self.fitted_p, self.fitted_d, self.fitted_q), trend=refactor_trend_code(self.fitted_trend),
-                                 seasonal_order=(0, 0, 0, 0)).fit()
-
-        forecasted = self.arima.forecast()[-1]
+        forecasted = self.arima.predict(n_periods=1)[-1]
         return forecasted
+
+    def copy(self):
+
+        return copy.deepcopy(self)
 
 
 class DefiniteArima:
@@ -938,7 +823,7 @@ class DefiniteArima:
         self.max_d = max_d
         self.d = None
         self.trend = None
-        self._arima = ARIMA
+        self._arima = pmdarima.ARIMA
         self.arima = None
     def fit(self, y):
 
@@ -979,21 +864,24 @@ class DefiniteArima:
         else:
             self.trend = 'n' if alternative_trend == 'n' else 't2'
 
-        self.arima = self._arima(endog=y.values, order=(self.p, self.d, self.q), trend=refactor_trend_code(self.trend),
-                                 seasonal_order=(0, 0, 0, 0)).fit()
+        self.arima = self._arima(order=(self.p, self.d, self.q), trend=refactor_trend_code(self.trend),
+                                 seasonal_order=(0, 0, 0, 0), method='nm', suppress_warnings=True)
+        self.arima.fit(y.values)
 
     def predict(self, y):
 
-        self.arima = self._arima(endog=y.values, order=(self.p, self.d, self.q), trend=refactor_trend_code(self.trend),
-                                 seasonal_order=(0, 0, 0, 0)).fit()
-
-        prediction = self.arima.predict()
+        prediction = self.arima.predict_in_sample(dynamic=False)
         return prediction
+
+    def update(self, y):
+
+        self.arima.update(y)
 
     def forecast(self, y):
 
-        self.arima = self._arima(endog=y.values, order=(self.p, self.d, self.q), trend=refactor_trend_code(self.trend),
-                                 seasonal_order=(0, 0, 0, 0)).fit()
-
-        forecasted = self.arima.forecast()[-1]
+        forecasted = self.arima.predict(n_periods=1)[-1]
         return forecasted
+
+    def copy(self):
+
+        return copy.deepcopy(self)

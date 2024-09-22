@@ -8,8 +8,8 @@ import pandas
 
 
 #
-from new_base_utils import new_read
-from new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
+from macro.new_base_utils import new_read
+from macro.new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
 
 
 #
