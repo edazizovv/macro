@@ -852,8 +852,18 @@ class DefiniteArima:
                     raise e
             except Exception as e:
                 raise e
-            kpss_result.loc[ix, 'kpss_values'] = kpss_output[1]
-        i = kpss_result['kpss_values'].argmax()
+            # kpss_result.loc[ix, 'kpss_values'] = kpss_output[1]
+            # due to undesired properties of the implementation of kpss test in the part how p-values are projected,
+            # a decision was made to consider test statistic values themselves
+            kpss_result.loc[ix, 'kpss_values_stat'] = kpss_output[0]
+            kpss_result.loc[ix, 'kpss_values_p1'] = kpss_output[3]['1%']
+            kpss_result.loc[ix, 'kpss_values_p10'] = kpss_output[3]['10%']
+        lesser_mask = kpss_result['kpss_values_stat'] <= kpss_result['kpss_values_p10']
+        if lesser_mask.sum() > 0:
+            conditional_min = kpss_result.loc[lesser_mask, 'kpss_values_stat'].min()
+            i = kpss_result['kpss_values_stat'].values.tolist().index(conditional_min)
+        else:
+            i = kpss_result['kpss_values_stat'].argmin()
         d, alternative_trend = kpss_result['d'].values[i], kpss_result['kpss_trend'].values[i]
 
         self.d = d

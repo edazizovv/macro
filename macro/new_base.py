@@ -519,8 +519,10 @@ class Item:
         date_hash = hashlib.sha256(pandas.util.hash_pandas_object(self.series['DATE'], index=False).values).hexdigest()
         value_hash = hashlib.sha256(pandas.util.hash_pandas_object(self.series[self.name], index=False).values).hexdigest()
         dictated = tuple([my_hex(self.name),
-                          my_hex(self.series['DATE'].values),
-                          my_hex(self.series[self.name].values),
+                          # my_hex(self.series['DATE'].values),
+                          # my_hex(self.series[self.name].values),
+                          date_hash,
+                          value_hash,
                           my_hex(self.value_type),
                           my_hex(self.ts_frequency)])
         return dictated
