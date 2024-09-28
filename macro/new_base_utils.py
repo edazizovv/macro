@@ -1,4 +1,5 @@
 #
+import hashlib
 
 
 #
@@ -11,6 +12,18 @@ from macro.new_constants import DQControlsErrors, DataReadingConstants, ValueTyp
 
 
 #
+def my_hex(x):
+    return hashlib.sha256(str(x).encode('UTF-8')).hexdigest()
+
+
+def my_dict_hex(dx):
+    return my_hex(tuple([dx[x] for x in sorted(dx.keys())]))
+
+
+def my_func_hex(f):
+    return my_hex(f.__name__)
+
+
 def new_read(source_formatter, name, value_type):
 
     series = pandas.read_csv(source_formatter.format(name), sep=DataReadingConstants.CSV_SEPARATOR)

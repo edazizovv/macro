@@ -10,15 +10,11 @@ import pandas
 
 
 #
-from macro.new_base_utils import new_read
+from macro.new_base_utils import new_read, my_hex
 from macro.new_constants import DataReadingConstants, SystemFilesSignatures, Routing
 
 
 #
-def my_hex(x):
-    return hashlib.sha256(str(x).encode('UTF-8')).hexdigest()
-
-
 class Phaser:
 
     def __init__(self, fg, sources, target, timeaxis, master_mobster, roller_mobsters):
