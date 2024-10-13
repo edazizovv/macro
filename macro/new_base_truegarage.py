@@ -8,7 +8,7 @@ from matplotlib import pyplot
 from sklearn.linear_model import enet_path, LinearRegression
 from sklearn.metrics import r2_score
 from scipy.stats import kendalltau
-from functional import SomersD as somersd
+from macro.functional import SomersD as somersd
 
 
 #

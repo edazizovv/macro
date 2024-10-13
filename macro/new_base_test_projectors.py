@@ -50,6 +50,11 @@ class VincentClassMobsterS:
                 x_train, y_train = data_train[[x for x in data_train.columns if x != self.mobsters[key].target]].iloc[:-1, :], data_train[self.mobsters[key].target].iloc[1:]
                 x_test, y_test = data_test[[x for x in data_test.columns if x != self.mobsters[key].target]].iloc[:-1, :], data_test[self.mobsters[key].target].iloc[1:]
 
+                z_train = pandas.concat((x_train, y_train), axis=1)
+                z_train.to_excel('../data/data_folds/data_train_{1}_{0}.xlsx'.format(fold_n, key), index=True)
+                z_test = pandas.concat((x_test, y_test), axis=1)
+                z_test.to_excel('../data/data_folds/data_test_{1}_{0}.xlsx'.format(fold_n, key), index=True)
+
                 self.mobsters[key].pull(fold_n=fold_n, x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
 
     def collapse(self):
@@ -734,11 +739,11 @@ class UGMARIMAClass:
         y = result.iloc[1:].copy()
         self.model = self._model(window=self.window, **self.model_kwargs)
         run_time = time.time() - run_time
-        print('prep', run_time)
+        # print('prep', run_time)
         run_time = time.time()
         self.model.fit(y=y)
         run_time = time.time() - run_time
-        print('fit', run_time)
+        # print('fit', run_time)
         run_time = time.time()
         y_hat = self.model.predict(y=y)[1:]
         y_forecast = self.model.forecast(y=y)
@@ -746,7 +751,7 @@ class UGMARIMAClass:
         result = result.copy()
         result.iloc[1:] = y_hat.astype(dtype=result.dtype)
         run_time = time.time() - run_time
-        print('cast', run_time)
+        # print('cast', run_time)
         return result
     def project_second(self, series_dict):
         assert len(list(series_dict.keys())) == 1

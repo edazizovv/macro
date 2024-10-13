@@ -427,11 +427,11 @@ class Projector:
         run_time = time.time()
         new_series_first_app = self.app_function.project_first({name: vices[name].lag_series_first for name in vices.keys()})
         run_time = time.time() - run_time
-        print('two_series: first', run_time)
+        # print('two_series: first', run_time)
         run_time = time.time()
         new_series_second_app = self.app_function.project_second({name: vices[name].lag_series_second for name in vices.keys()})
         run_time = time.time() - run_time
-        print('two_series: second', run_time)
+        # print('two_series: second', run_time)
 
         # run_time = time.time()
         assert numpy.unique([vices[name].start_dt for name in vices.keys()]).shape[0] == 1
@@ -869,8 +869,8 @@ class Path:
                 )
                 self.stock[seed] = self.stock_new[seed]
                 run_time = time.time() - run_time
-                print(seed)
-                print(run_time)
+                # print(seed)
+                # print(run_time)
 
             if numpy.isin(features, list(self.stock.keys())).all():
                 self.finish = True
