@@ -8,7 +8,7 @@ from matplotlib import pyplot
 from sklearn.linear_model import enet_path, LinearRegression
 from sklearn.metrics import r2_score
 from scipy.stats import kendalltau
-from macro.functional import SomersD as somersd
+from macro.functional import sd_metric
 
 
 #
@@ -26,7 +26,7 @@ def kendalltau_metric(x, y):
 
 
 def somersd_metric(x, y):
-    metered = somersd(x=x, y=y)
+    metered = sd_metric(x=x, y=y)
     return metered
 
 

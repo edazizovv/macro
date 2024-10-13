@@ -12,8 +12,21 @@ def pv_metric(x, y):
 def ps_metric(x, y):
     return stats.pearsonr(x, y)[1]
 
+def sd_metric(x, y):
+    """
+    There is a known issue in the scipy's notation: scipy's x should be the dependent variable and y should be the independent one
+    """
 
-def SomersD(x, y):
+    return stats.somersd(y=x, x=y).statistic
+
+
+def _false_SomersD(x, y):
+    """
+    ATTENTION:
+
+    this is an incorrect implementation, do not use it!
+
+    """
 
     x = np.asarray(x).ravel()
     y = np.asarray(y).ravel()

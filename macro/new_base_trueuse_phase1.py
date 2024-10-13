@@ -13,7 +13,7 @@ from macro.new_data_check import control, controller_view
 from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metric, BasicLinearModel as MicroModel, BasicLassoSelectorModel as SelectorModel
 from scipy import stats
 from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
-from macro.functional import SomersD, pv_metric
+from macro.functional import sd_metric, pv_metric
 
 #
 loader_source = '../data/data_meta/loader_pitch.xlsx'
@@ -53,7 +53,7 @@ Stage 0: Generate features
 print("Stage 0")
 
 projector = Projector
-# performer = SomersD
+# performer = sd_metric
 performer = pv_metric
 target_source = 'TLT'
 target_transform = path_pseudo_edges[path_vertices.index(target)]
