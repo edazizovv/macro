@@ -29,9 +29,9 @@ from macro.new_base_utils import my_hex, my_dict_hex, my_func_hex
 
 class VincentClassMobsterS:
 
-    def __init__(self, x_factors_in, target, target_source, target_transform, name_list, param_list, projector, performer=None, stabilizer=None):
+    def __init__(self, x_factors_in, target, target_source, target_transform, name_list, base_transform, param_list, projector, performer=None, stabilizer=None):
 
-        self.mobsters = {x_factors_in[j]: VincentClassMobster(name=x_factors_in[j], target=target, target_source=target_source, target_transform=target_transform, name_list=name_list, param_list=param_list, projector=projector, performer=performer, stabilizer=stabilizer) for j in range(len(x_factors_in))}
+        self.mobsters = {x_factors_in[j]: VincentClassMobster(name=x_factors_in[j], target=target, target_source=target_source, target_transform=target_transform, name_list=name_list, base_transform=base_transform, param_list=param_list, projector=projector, performer=performer, stabilizer=stabilizer) for j in range(len(x_factors_in))}
 
     def pull(self, fg, sources, timeaxis):
 
@@ -76,13 +76,14 @@ class VincentClassMobsterS:
 
 class VincentClassMobster:
 
-    def __init__(self, name, target, target_source, target_transform, name_list, param_list, projector, performer=None, stabilizer=None):
+    def __init__(self, name, target, target_source, target_transform, name_list, base_transform, param_list, projector, performer=None, stabilizer=None):
 
         self.name = name
         self.target = target
         self.target_source = target_source
         self.target_transform = target_transform
         self.name_list = name_list
+        self.base_transform = base_transform
         self.param_list = param_list
         self._projector = projector
         self.performer = performer
@@ -135,6 +136,7 @@ class VincentClassMobster:
 
             if self.performer is not None:
                 performed = self.performer(x=x_test.iloc[:, j].values, y=y_test.values)
+                performed = numpy.abs(performed)
             else:
                 performed = numpy.nan
             if self.stabilizer is not None:
@@ -144,7 +146,7 @@ class VincentClassMobster:
             self.local_resulted.append([fold_n, self.name_list[j], performed, stabilized])
         self.local_resulted = pandas.DataFrame(data=self.local_resulted, columns=['fold_n', 'transform', 'performed', 'stabilized'])
 
-        base_performed = self.performer(x=x_test.iloc[:, len(self.name_list)].values, y=y_test.values)
+        base_performed = self.performer(x=x_test.iloc[:, self.name_list.index(self.base_transform)].values, y=y_test.values)
         self.local_resulted['base_performed'] = numpy.abs(base_performed)
 
         # xxl = pandas.DataFrame(data={'x': x_test.iloc[:, len(self.name_list)].values, 'y': y_test.values})
@@ -188,7 +190,7 @@ class VincentClassMobster:
         if global_resulted_filtered.shape[0] > 0:
             the_chosen_one = ['{0}__{1}'.format(self.name, global_resulted_filtered.index.values[0])]
         else:
-            the_chosen_one = []
+            the_chosen_one = ['{0}__{1}'.format(self.name, self.base_transform)]
 
         return the_chosen_one, (self.global_resulted_agg, self.global_resulted)
 

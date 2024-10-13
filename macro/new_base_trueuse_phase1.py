@@ -56,18 +56,19 @@ projector = Projector
 # performer = sd_metric
 performer = pv_metric
 target_source = 'TLT'
+base_transform = 'pct_shift1'
 target_transform = path_pseudo_edges[path_vertices.index(target)]
 
 vcs = VincentClassMobsterS(x_factors_in=features,
                            target=target, target_source=target_source, target_transform=target_transform,
-                           name_list=name_list, param_list=param_list,
+                           name_list=name_list, base_transform=base_transform, param_list=param_list,
                            projector=projector, performer=performer)
 vcs.pull(fg=fg, sources=sources, timeaxis=timeaxis)
 collapsed, collapsed_stats = vcs.collapse()
 # raise Exception("ghoul?")
 
 """
-nex = 'AAA'
+nex = 'A229RX0'    # A229RX0 AAA AWHAERT AWHMAN BAA
 xxl, xxx = collapsed_stats[nex][0],  collapsed_stats[nex][1]
 xxl = xxl.sort_values(by='test_result')
 xxx = xxx.sort_values(by='transform')
