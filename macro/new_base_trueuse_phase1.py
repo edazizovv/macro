@@ -68,8 +68,8 @@ collapsed, collapsed_stats = vcs.collapse()
 # raise Exception("ghoul?")
 
 """
-nex = 'A229RX0'    # A229RX0 AAA AWHAERT AWHMAN BAA
+nex = 'AWHAERT'    # A229RX0 AAA AWHAERT AWHMAN BAA
 xxl, xxx = collapsed_stats[nex][0],  collapsed_stats[nex][1]
-xxl = xxl.sort_values(by='test_result')
+xxl = xxl.sort_values(by='test2_result')
 xxx = xxx.sort_values(by='transform')
 """

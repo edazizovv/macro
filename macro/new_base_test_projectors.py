@@ -136,6 +136,11 @@ class VincentClassMobster:
 
             if self.performer is not None:
                 performed = self.performer(x=x_test.iloc[:, j].values, y=y_test.values)
+                if pandas.isna(performed):
+                    if x_test.iloc[:, j].unique().shape[0] == 1:
+                        performed = 0
+                    else:
+                        raise Exception("Unhandled issue causing NaN performance; check please")
                 performed = numpy.abs(performed)
             else:
                 performed = numpy.nan
@@ -158,6 +163,9 @@ class VincentClassMobster:
 
     def collapse(self):
 
+        """
+        # to be considered as a feature once:
+
         # adjust for potential change of the signs
         n_performed = (self.global_resulted['performed'] >= 0).sum()
         if n_performed < (self.global_resulted['performed'].shape[0] / 2):
@@ -165,34 +173,47 @@ class VincentClassMobster:
         n_base = (self.global_resulted['base_performed'] >= 0).sum()
         if n_base < (self.global_resulted['base_performed'].shape[0] / 2):
             self.global_resulted['base_performed'] = self.global_resulted['base_performed'] * (-1)
+        """
 
         # https://www.statisticssolutions.com/free-resources/directory-of-statistical-analyses/paired-sample-t-test/
         self.global_resulted['perf_diff'] = self.global_resulted['performed'] - self.global_resulted['base_performed']
         global_resulted_agg_part = self.global_resulted.groupby(by='transform')
-        global_resulted_agg_mean = global_resulted_agg_part[['perf_diff']].mean().rename(columns={'perf_diff': 'mean'})
-        global_resulted_agg_std = global_resulted_agg_part[['perf_diff']].std().rename(columns={'perf_diff': 'std'})
+        global_resulted_agg_mean = global_resulted_agg_part[['perf_diff', 'performed', 'base_performed']].mean().rename(columns={'perf_diff': 'perf_diff_mean', 'performed': 'performed_mean', 'base_performed': 'base_performed_mean'})
+        global_resulted_agg_std = global_resulted_agg_part[['perf_diff', 'performed', 'base_performed']].std().rename(columns={'perf_diff': 'perf_diff_std', 'performed': 'performed_std', 'base_performed': 'base_performed_std'})
         global_resulted_agg_count = global_resulted_agg_part[['perf_diff']].count().rename(columns={'perf_diff': 'n'})
         global_resulted_agg = global_resulted_agg_mean.merge(right=global_resulted_agg_std, left_index=True, right_index=True, how='outer')
         global_resulted_agg = global_resulted_agg.merge(right=global_resulted_agg_count, left_index=True, right_index=True, how='outer')
 
-        def tester(x):
-            arg = x['mean'] / (x['std'] / (x['n'] ** 0.5))
+        def tester(x, col):
+            arg = x[f'{col}_mean'] / (x[f'{col}_std'] / (x['n'] ** 0.5))
             pv = 1 - stats.t.cdf(x=arg, df=x['n'] - 1)
             return pv
 
-        global_resulted_agg['test_result'] = global_resulted_agg.apply(func=tester, axis=1)
-        global_resulted_agg = global_resulted_agg.sort_values(by='test_result')
+        # test#1 on zero mean for base (alt: greater)
+        global_resulted_agg['test1_base_result'] = global_resulted_agg.apply(func=tester, axis=1, args=('base_performed',))
+        # test#1 on zero mean for candidate (alt: greater)
+        global_resulted_agg['test1_candidate_result'] = global_resulted_agg.apply(func=tester, axis=1, args=('performed',))
+        # test#2 on mean(candidate) == mean(base) (alt: candidate greater)
+        global_resulted_agg['test2_result'] = global_resulted_agg.apply(func=tester, axis=1, args=('perf_diff',))
+
+        global_resulted_agg = global_resulted_agg.sort_values(by='test2_result')
         self.global_resulted_agg = global_resulted_agg.copy()
 
         cmp_alpha_thresh = 0.05
 
-        global_resulted_filtered = global_resulted_agg[global_resulted_agg['test_result'] <= cmp_alpha_thresh].copy()
-        if global_resulted_filtered.shape[0] > 0:
-            the_chosen_one = ['{0}__{1}'.format(self.name, global_resulted_filtered.index.values[0])]
-        else:
-            the_chosen_one = ['{0}__{1}'.format(self.name, self.base_transform)]
+        the_chosen = []
 
-        return the_chosen_one, (self.global_resulted_agg, self.global_resulted)
+        global_resulted_filtered = global_resulted_agg[(global_resulted_agg['test2_result'] <= cmp_alpha_thresh) & (global_resulted_agg['test1_candidate_result'] <= cmp_alpha_thresh)].copy()
+        if global_resulted_filtered.shape[0] > 0:
+            the_chosen += ['{0}__{1}'.format(self.name, global_resulted_filtered.index.values[0])]
+        else:
+            global_resulted_filtered = global_resulted_agg[global_resulted_agg['test1_base_result'] <= cmp_alpha_thresh].copy()
+            if global_resulted_filtered.shape[0] > 0:
+                the_chosen += ['{0}__{1}'.format(self.name, self.base_transform)]
+            else:
+                the_chosen += []
+
+        return the_chosen, (self.global_resulted_agg, self.global_resulted)
 
 
 class Stayer:
