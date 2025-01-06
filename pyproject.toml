@@ -11,6 +11,7 @@ packages = [{include = "macro"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
+torch = "^2.5.1"
 
 
 [build-system]

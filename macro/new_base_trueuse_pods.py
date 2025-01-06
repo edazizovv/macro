@@ -32,7 +32,7 @@ vertices_in_conf = path_xl['vertices_in'].str.split(';').values
 vertices_in = numpy.unique(vertices_in_conf.flatten())
 
 assert vertices_out.shape[0] == numpy.unique(vertices_out).shape[0]
-vertices_joint = numpy.unique(vertices_out.tolist() + numpy.unique(vertices_out).tolist())
+vertices_joint = numpy.unique([y for x in vertices_in for y in x] + vertices_out.tolist())
 
 path_vertices = vertices_joint.tolist()
 path_matrix = numpy.zeros(shape=(vertices_joint.shape[0], vertices_joint.shape[0]))

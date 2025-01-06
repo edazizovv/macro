@@ -1,4 +1,5 @@
 import numpy as np
+import numpy
 from scipy.stats._stats import _kendall_dis
 from sklearn.metrics import r2_score
 from scipy import stats
@@ -8,6 +9,9 @@ def r2_metric(x, y):
 
 def pv_metric(x, y):
     return stats.pearsonr(x, y)[0]
+
+def pa_metric(x, y):
+    return numpy.abs(pv_metric(x=x, y=y))
 
 def ps_metric(x, y):
     return stats.pearsonr(x, y)[1]

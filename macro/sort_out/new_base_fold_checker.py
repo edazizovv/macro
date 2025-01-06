@@ -8,8 +8,8 @@ from macro.new_base_test_projectors import UGMARIMAClass, AutoArima
 d = '../data/data_folds/'
 os.listdir(d)
 
-os.chdir('../')
-os.listdir('./')
+os.chdir('../../')
+os.listdir('../')
 
 dd = './data/data_folds/data_{0}_{1}.xlsx'
 

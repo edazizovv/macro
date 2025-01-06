@@ -644,21 +644,22 @@ class TimeAxe:
     ...
 
 class FoldGenerator:
-    def __init__(self, n_folds, joint_lag=None, val_rate=0.5, overlap_rate=0.5):
+    def __init__(self, n_folds, joint_lag=None, val_rate=0.5, overlap_rate=0.5, verbose=False):
         self.n_folds = n_folds
         self.joint_lag = joint_lag
         self.current_fold = -1
         self.val_rate = val_rate
         self.overlap_rate = overlap_rate
         self.path = None
+        self.verbose = verbose
     def copy(self):
         f = FoldGenerator(n_folds=self.n_folds, joint_lag=self.joint_lag, val_rate=self.val_rate, overlap_rate=self.overlap_rate)
-        f.init_path(path_vertices=self.path.path_vertices, path_matrix=self.path.path_matrix, path_pseudo_edges=self.path.path_pseudo_edges, savers=self.path.savers)
+        f.init_path(path_vertices=self.path.path_vertices, path_matrix=self.path.path_matrix, path_pseudo_edges=self.path.path_pseudo_edges, save_features=self.path.save_features)
         return f
     def set_lag(self, joint_lag):
         self.joint_lag = joint_lag
-    def init_path(self, path_vertices, path_matrix, path_pseudo_edges, savers):
-        self.path = Path(path_vertices, path_matrix, path_pseudo_edges, savers)
+    def init_path(self, path_vertices, path_matrix, path_pseudo_edges, save_features):
+        self.path = Path(path_vertices, path_matrix, path_pseudo_edges, save_features)
     @property
     def folds(self):
         return list(range(self.n_folds))
@@ -676,7 +677,6 @@ class FoldGenerator:
         else:
             self.current_fold = fold_n
 
-        # fold_size = (timeaxis.shape[0] - self.joint_lag) / self.n_folds
         fold_size = (timeaxis.shape[0] - self.joint_lag) / (1 + self.overlap_rate * (self.n_folds - 1))
 
         lag_start_int = int(fold_size * self.overlap_rate * self.current_fold)
@@ -690,11 +690,13 @@ class FoldGenerator:
         lag_mid_dt = timeaxis[lag_mid_int]
         mid_dt = timeaxis[mid_int]
         end_dt = timeaxis[end_int]
-        '''
-        print("Folding: {0} / {1} \n\n\tlag_start=\t{2}; \n\tstart=\t\t{3}; \n\tlag_mid=\t{4}; \n\tmid=\t\t{5}; \n\tend=\t\t{6}; \n\tval_rate=\t{7:.2f}\n\tsize=\t{8}".format(
-            self.current_fold, self.n_folds, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt, self.val_rate, end_int - mid_int
-        ))
-        '''
+
+        if self.verbose:
+
+            print("Folding: {0} / {1} \n\n\tlag_start=\t{2}; \n\tstart=\t\t{3}; \n\tlag_mid=\t{4}; \n\tmid=\t\t{5}; \n\tend=\t\t{6}; \n\tval_rate=\t{7:.2f}\n\tsize=\t{8}".format(
+                self.current_fold, self.n_folds, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt, self.val_rate, end_int - mid_int
+            ))
+
 
         self.path.route(sources=sources,
                         features=features,
@@ -723,11 +725,11 @@ class FoldGenerator:
 
 
 class PathPreView:
-    def __init__(self, path_vertices, path_matrix, path_pseudo_edges, savers, selection):
+    def __init__(self, path_vertices, path_matrix, path_pseudo_edges, save_features, selection):
         self.path_vertices = numpy.array(path_vertices)
         self.path_matrix = path_matrix.astype(dtype=bool)
         self.path_pseudo_edges = numpy.array(path_pseudo_edges)
-        self.savers = savers
+        self.save_features = save_features
         self.selection = selection
     @property
     def ix(self):
@@ -742,36 +744,22 @@ class PathPreView:
         result = self.path_vertices[self.path_matrix[self.ix, :]]
         return result
     def grow_local(self, stock):
-        # run_time = time.time()
         parental_stock = {s: stock[s] for s in stock.keys() if s in self.parents}
         input_hash = my_hex(tuple([x.signature for x in parental_stock.values()]))
         projector_hash = self.path_pseudo_edges[self.ix].parametrization_hash
-        # run_time = time.time() - run_time
-        # print('first', run_time)
 
-        if not self.savers[self.ix]:
-            # run_time = time.time()
+        if not self.save_features[self.ix]:
             resulting_unh_vice = self.path_pseudo_edges[self.ix].fit_transform(vs=parental_stock)
-            # run_time = time.time() - run_time
-            # print('second', run_time)
-            # resulting_unh_vice.sign(incoming_chain=input_hash, projector_hash=projector_hash)
-        elif self.automaton_checker(input_hash=input_hash, projector_hash=projector_hash):
+        elif self.chainlink_checker(input_hash=input_hash, projector_hash=projector_hash):
             resulting_unh_vice = UnholyVice()
             resulting_unh_vice.sign(incoming_chain=input_hash, projector_hash=projector_hash)
         else:
-            # run_time = time.time()
             resulting_unh_vice = self.path_pseudo_edges[self.ix].fit_transform(vs=parental_stock)
-            # run_time = time.time() - run_time
-            # print('second', run_time)
-            # resulting_unh_vice.sign(incoming_chain=input_hash, projector_hash=projector_hash)
-            # run_time = time.time()
             resulting_hash = resulting_unh_vice.signature
-            self.automaton_writer(input_hash=input_hash, projector_hash=projector_hash, resulting_hash=resulting_hash)
+            self.chainlink_writer(input_hash=input_hash, projector_hash=projector_hash, resulting_hash=resulting_hash)
             resulting_unh_vice.dump()
-            # run_time = time.time() - run_time
-            # print('third', run_time)
         return resulting_unh_vice
-    def automaton_checker(self, input_hash, projector_hash):
+    def chainlink_checker(self, input_hash, projector_hash):
         input_hash = str(input_hash)
         projector_hash = str(projector_hash)
         d = '../data/other/chain_link.xlsx'
@@ -787,7 +775,7 @@ class PathPreView:
             return True
         else:
             raise Exception("Too many records in the chainlink for {0} and {1}".format(input_hash, projector_hash))
-    def automaton_writer(self, input_hash, projector_hash, resulting_hash):
+    def chainlink_writer(self, input_hash, projector_hash, resulting_hash):
         input_hash = str(input_hash)
         projector_hash = str(projector_hash)
         resulting_hash = str(resulting_hash)
@@ -812,11 +800,11 @@ class PathPreView:
 
 
 class Path:
-    def __init__(self, path_vertices, path_matrix, path_pseudo_edges, savers):
+    def __init__(self, path_vertices, path_matrix, path_pseudo_edges, save_features):
         self.path_vertices = path_vertices
         self.path_matrix = path_matrix
         self.path_pseudo_edges = path_pseudo_edges
-        self.savers = savers
+        self.save_features = save_features
 
         self.stock = {}
         self.stock_new = {}
@@ -828,7 +816,7 @@ class Path:
         result = PathPreView(path_vertices=self.path_vertices,
                              path_matrix=self.path_matrix,
                              path_pseudo_edges=self.path_pseudo_edges,
-                             savers=self.savers,
+                             save_features=self.save_features,
                              selection=selection)
         return result
     def route(self, sources, features, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt):
@@ -869,8 +857,6 @@ class Path:
                 )
                 self.stock[seed] = self.stock_new[seed]
                 run_time = time.time() - run_time
-                # print(seed)
-                # print(run_time)
 
             if numpy.isin(features, list(self.stock.keys())).all():
                 self.finish = True
