@@ -8,7 +8,8 @@ import pandas
 
 #
 from macro.new_base import Path, Projector, Item, FoldGenerator
-from macro.new_base_test_projectors import WindowAppGenerator, VincentClassMobsterS
+from macro.new_base_test_projectors import WindowAppGenerator
+from macro.new_base_trueuse_phase0_garage import VincentClassFeatureEngineeringDeck
 from macro.new_data_check import control, controller_view
 from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metric, BasicLinearModel as MicroModel, BasicLassoSelectorModel as SelectorModel
 from scipy import stats
@@ -52,10 +53,17 @@ target_source = 'IVV'
 base_transform = 'pct_shift1'
 target_transform = path_pseudo_edges[path_vertices.index(target)]
 
-vcs = VincentClassMobsterS(x_factors_in=features,
-                           target=target, target_source=target_source, target_transform=target_transform,
-                           name_list=name_list, base_transform=base_transform, param_list=param_list,
-                           projector=projector, performer=performer)
+'''
+NOTE:
+Performer MUST be a measure with "greater-better" design 
+(can be symmetric or support both negative and positive association).
+Absulte differences must also be meaningful for it. 
+'''
+
+vcs = VincentClassFeatureEngineeringDeck(x_factors_in=features,
+                                         target=target, target_source=target_source, target_transform=target_transform,
+                                         name_list=name_list, base_transform=base_transform, param_list=param_list,
+                                         projector=projector, performer=performer)
 vcs.pull(fg=fg, sources=sources, timeaxis=timeaxis)
 collapsed, collapsed_stats = vcs.collapse()
 

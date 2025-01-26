@@ -108,8 +108,8 @@ predictions = best_model.predict(val_dataloader)
 
 raw_predictions = best_model.predict(val_dataloader, mode="raw", return_x=True, return_y=False)
 
-best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=-100, add_loss_to_title=True)
+best_model.plot_prediction(raw_predictions.row, raw_predictions.output, idx=-100, add_loss_to_title=True)
 
-best_model.plot_interpretation(raw_predictions.x, raw_predictions.output, idx=100)
+best_model.plot_interpretation(raw_predictions.row, raw_predictions.output, idx=100)
 
 raw_predictions
