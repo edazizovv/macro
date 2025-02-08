@@ -9,14 +9,14 @@ import pandas
 #
 from macro.new_base import Path, Projector, Item, FoldGenerator
 from macro.new_base_test_projectors import WindowAppGenerator
-from macro.new_data_check import control, controller_view
+from macro.new_data_check import pod_loader, controller_view
 
 
 #
 loader_source = './data_meta/loader_pitch.xlsx'
 controller_source = './controller_pitch.xlsx'
 
-controller = control(loader_source)
+controller = pod_loader(loader_source)
 controller.to_excel(controller_source, index=False)
 
 # check_original, check_typec, check_tsc = controller_view(loader=loader_source, name='BAMLC0A0CM')

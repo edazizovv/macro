@@ -8,7 +8,7 @@ import pandas
 
 
 #
-from macro.new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
+from macro._new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
 
 
 #
@@ -24,9 +24,9 @@ def my_func_hex(f):
     return my_hex(f.__name__)
 
 
-def new_read(source_formatter, name, value_type):
+def new_read(source_formatter, name, reader, value_type):
 
-    series = pandas.read_csv(source_formatter.format(name), sep=DataReadingConstants.CSV_SEPARATOR)
+    series = reader.read(source_formatter=source_formatter, name=name)
     if not (series.shape[1] == 2):
         return DQControlsErrors.DIM_ERROR, None, None, None
     if not (series.columns[0] == DataReadingConstants.DATE_COLUMN):

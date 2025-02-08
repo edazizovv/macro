@@ -11,37 +11,21 @@ from sklearn.linear_model import LinearRegression
 #
 from macro.new_base import Path, Projector, Item, FoldGenerator
 from macro.new_base_test_projectors import WindowAppGenerator, VincentClassMobsterS
-from macro.new_data_check import control, controller_view
+from macro.new_data_check import pod_loader, controller_view
 from functional import pa_metric, r2_metric
 from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metric, BasicLinearModel as MicroModel, BasicLassoSelectorModel as SelectorModel
 from scipy import stats
 from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
 from macro.functional import sd_metric, pv_metric
+from raise_fold_generator import fg, start_date, end_date
 
 #
-loader_source = '../data/data_meta/loader_pitch.xlsx'
-controller_source = '../data/other/controller_pitch.xlsx'
-
-controller = control(loader_source)
-controller.to_excel(controller_source, index=False)
-
-"""
-Stage -1: Fold generator set-up
-"""
-
-n_folds = 10
-# n_folds = 2
-joint_lag = 12
-val_rate = 0.5
-overlap_rate = 0.15
-fg = FoldGenerator(n_folds=n_folds, joint_lag=joint_lag, val_rate=val_rate, overlap_rate=overlap_rate)
-
 target = 'IVV_aggmean_pct'
 
-savers = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
-fg.init_path(path_vertices, path_matrix, path_pseudo_edges, savers)
+timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime(start_date).isoformat()]
 
-timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime('2007-01-01').isoformat()]
+save_features = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
+fg.init_path(path_vertices, path_matrix, path_pseudo_edges, save_features)
 
 """
 Stage 1: Univariate selection
@@ -93,7 +77,7 @@ chosen = util_prepare_chosen(
     check_results_agg=check_results_agg,
 )
 
-chosen.to_excel('./ab.xlsx')
+chosen.to_excel('./phase_1_chosen.xlsx')
 
 '''
 # conservatism procedure

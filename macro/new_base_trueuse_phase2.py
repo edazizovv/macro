@@ -16,39 +16,22 @@ from scipy.stats import multivariate_normal, norm, ecdf
 #
 from macro.new_base import Path, Projector, Item, FoldGenerator
 from macro.new_base_test_projectors import WindowAppGenerator
-from macro.new_data_check import control, controller_view
+from macro.new_data_check import pod_loader, controller_view
 from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metric, BasicLinearModel as MicroModel, BasicLassoSelectorModel as SelectorModel
 from scipy import stats
 from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
 from macro.functional import sd_metric, pv_metric
 from macro.new_base_bootstrap_multivariate_feature_selectors import bootstrap_direct_perf_improvement_sampler as pperf
 from macro.new_base_trueuse_phase2_garage import lm_proxy, dt_proxy, rf_proxy, kn_proxy
-
+from raise_fold_generator import fg, start_date, end_date
 
 #
-loader_source = '../data/data_meta/loader_pitch.xlsx'
-controller_source = '../data/other/controller_pitch.xlsx'
+target = 'IVV_aggmean_pct'
 
-controller = control(loader_source)
-controller.to_excel(controller_source, index=False)
+timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime(start_date).isoformat()]
 
-"""
-Stage -1: Fold generator set-up
-"""
-
-n_folds = 10
-# n_folds = 2
-joint_lag = 12
-val_rate = 0.5
-overlap_rate = 0.15
-fg = FoldGenerator(n_folds=n_folds, joint_lag=joint_lag, val_rate=val_rate, overlap_rate=overlap_rate)
-
-target = 'TLT_aggmean_pct'
-
-savers = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
-fg.init_path(path_vertices, path_matrix, path_pseudo_edges, savers)
-
-timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime('2007-01-01').isoformat()]
+save_features = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
+fg.init_path(path_vertices, path_matrix, path_pseudo_edges, save_features)
 
 """
 Stage 2.1: LASSO-based skeleton

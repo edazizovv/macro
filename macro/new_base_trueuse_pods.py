@@ -10,16 +10,13 @@ import pandas
 #
 from macro.new_base import Path, Projector, Item, FoldGenerator
 from macro.new_base_test_projectors import WindowRollImpulse, SimpleAggregator, SimpleCasterAggMonth
-from macro.new_data_check import control, controller_view
+from macro.new_data_check import pod_loader, controller_view
 from macro.new_base_test_projectors_translate import a_function_translator, a_function_kwg_translator
 
 
 #
 loader_source = '../data/data_meta/loader_pitch.xlsx'
 controller_source = '../data/other/controller_pitch.xlsx'
-
-controller = control(loader_source)
-controller.to_excel(controller_source, index=False)
 
 source_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='sources')
 path_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='prog')

@@ -8,8 +8,13 @@ import pandas
 
 
 #
+from macro.new_constants import (
+    PROJECT_STRUCTURE as PJST,
+    LOADING_DOCK as LD,
+)
+from macro.new_utils.readers import READERS
 from macro.new_base_utils import new_read
-from macro.new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
+from macro._new_constants import DQControlsErrors, DataReadingConstants, ValueTypes, SystemFilesSignatures, Routing  # TSTypes,
 
 
 #
@@ -77,9 +82,9 @@ def controller_view(loader, name):
     return original_series, type_controlled_series, series_ts_controlled
 
 
-def control_item(source_formatter, name, value_type, ts_frequency):
+def load_pod_item(source_formatter, name, reader, value_type, ts_frequency):
 
-    series = new_read(source_formatter=source_formatter, name=name, value_type=value_type)
+    series = new_read(source_formatter=source_formatter, name=name, reader=reader, value_type=value_type)
 
     # TODO: timezones to be controlled
     # TODO: higher frequencies to be implemented
@@ -115,19 +120,35 @@ def control_item(source_formatter, name, value_type, ts_frequency):
     return DQControlsErrors.OK, n_total, check_before_value_miss, check_after_value_miss, hashed
 
 
-def control(loader):
+def pod_loader():
+    """
+    PL refers to a standard dc_pod controller in the loading dock.
+    dc_pod must provide relevant references to an actual data catalogue pod to be used in the run.
+    PL automatically saves its outputs in dc_pod output section. Refer to the latter for data quality review.
+    """
 
-    loaded = pandas.read_excel(loader)
-    assert all([x in loaded.columns for x in SystemFilesSignatures.LOADER_SIGNATURE])
+    dock_d = PJST.LOADING_DOCK.CTRL_FPATH
+    dock = pandas.read_excel(dock_d)
+    dock = dock.set_index(LD.DC_POD.DOCK_INDEX_COLUMN)
+    dock_path = dock.loc[LD.DC_POD.POD_ROW, LD.DC_POD.LOCATOR_COLUMN]
+
+    controller_d = f"{dock_path}{LD.DC_POD.CONTROLLER_FILE}"
+    controller = pandas.read_excel(controller_d)
+    source_formatter = f"{dock_path}{LD.DC_POD.POD_FOLDER}"
+
+    assert all([x in controller.columns for x in SystemFilesSignatures.LOADER_SIGNATURE])    # TODO: const to be refactored
 
     statuses, before_value_misses, after_value_misses, hashed_values = [], [], [], []
     n_total, before_value_misses_pct, after_value_misses_pct = [], [], []
-    for i in range(loaded.shape[0]):
-        status, nn, before_value_miss, after_value_miss, hashed = control_item(
-            source_formatter=Routing.DATA_SOURCE_FORMATTER,
-            name=loaded['name'].values[i],
-            value_type=loaded['value_type'].values[i],
-            ts_frequency=loaded['ts_frequency'].values[i]
+    for i in range(controller.shape[0]):     # TODO: refactor with row iterator
+        reader = READERS[controller['reader'].values[i]]
+        reader = reader()
+        status, nn, before_value_miss, after_value_miss, hashed = load_pod_item(
+            source_formatter=source_formatter,
+            name=controller['name'].values[i],
+            reader=reader,
+            value_type=controller['value_type'].values[i],
+            ts_frequency=controller['ts_frequency'].values[i]
         )
         statuses.append(status)
         before_value_misses.append(before_value_miss)
@@ -136,7 +157,7 @@ def control(loader):
         n_total.append(nn)
         before_value_misses_pct.append(before_value_miss / nn)
         after_value_misses_pct.append(after_value_miss / nn)
-    result = pandas.DataFrame(data={'name': loaded['name'].values,
+    result = pandas.DataFrame(data={'name': controller['name'].values,
                                     'status': statuses,
                                     'n_total': n_total,
                                     'before_value_miss': before_value_misses,
@@ -144,7 +165,8 @@ def control(loader):
                                     'after_value_miss': after_value_misses,
                                     'after_value_miss_pct': after_value_misses_pct,
                                     'hashed': hashed_values,
-                                    'value_type': loaded['value_type'].values,
-                                    'ts_frequency': loaded['ts_frequency'].values})
+                                    'value_type': controller['value_type'].values,
+                                    'ts_frequency': controller['ts_frequency'].values})
     assert result.columns.values.tolist() == SystemFilesSignatures.CONTROLLER_SIGNATURE
-    return result
+    with pandas.ExcelWriter(dock_d, mode="a", if_sheet_exists="replace") as writer:
+        result.to_excel(writer, sheet_name=LD.DC_POD.OUTPUT_SHEET, index=False)

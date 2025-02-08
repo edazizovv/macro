@@ -7,39 +7,23 @@ import pandas
 
 
 #
-from macro.new_base import Path, Projector, Item, FoldGenerator
+from macro.new_base import Path, Projector, Item
 from macro.new_base_test_projectors import WindowAppGenerator
 from macro.new_base_trueuse_phase0_garage import VincentClassFeatureEngineeringDeck
-from macro.new_data_check import control, controller_view
+from macro.new_data_check import controller_view
 from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metric, BasicLinearModel as MicroModel, BasicLassoSelectorModel as SelectorModel
 from scipy import stats
 from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
 from macro.functional import sd_metric, pv_metric
+from raise_fold_generator import fg, start_date, end_date
 
 #
-loader_source = '../data/data_meta/loader_pitch.xlsx'
-controller_source = '../data/other/controller_pitch.xlsx'
-
-controller = control(loader_source)
-controller.to_excel(controller_source, index=False)
-
-"""
-Stage -1: Fold generator set-up
-"""
-
-n_folds = 10
-# n_folds = 2
-joint_lag = 12
-val_rate = 0.5
-overlap_rate = 0.15
-fg = FoldGenerator(n_folds=n_folds, joint_lag=joint_lag, val_rate=val_rate, overlap_rate=overlap_rate)
-
 target = 'IVV_aggmean_pct'
+
+timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime(start_date).isoformat()]
 
 save_features = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
 fg.init_path(path_vertices, path_matrix, path_pseudo_edges, save_features)
-
-timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime('2007-01-01').isoformat()]
 
 """
 Stage 0: Generate features

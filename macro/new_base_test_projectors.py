@@ -18,7 +18,7 @@ from statsmodels.tsa.stattools import kpss
 
 #
 from macro.new_base import UnholyVice
-from macro.new_constants import ValueTypes
+from macro._new_constants import ValueTypes
 from macro.new_base_utils import my_hex, my_dict_hex, my_func_hex
 
 

@@ -9,7 +9,7 @@ import pandas
 #
 from macro.new_base import Path, Projector, Item, FoldGenerator
 from macro.new_base_test_projectors import WindowAppGenerator, VincentClassMobsterS
-from macro.new_data_check import control, controller_view
+from macro.new_data_check import pod_loader, controller_view
 from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metric, BasicLinearModel as MicroModel, BasicLassoSelectorModel as SelectorModel
 from scipy import stats
 from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
@@ -19,7 +19,7 @@ from macro.functional import SomersD, pv_metric
 loader_source = '../data/data_meta/loader_pitch.xlsx'
 controller_source = '../data/other/controller_pitch.xlsx'
 
-controller = control(loader_source)
+controller = pod_loader(loader_source)
 controller.to_excel(controller_source, index=False)
 
 """

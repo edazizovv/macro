@@ -42,7 +42,7 @@ class Routing:
 
 
 class SystemFilesSignatures:
-    LOADER_SIGNATURE = ['name', 'value_type', 'ts_frequency', 'publication_lag']
+    LOADER_SIGNATURE = ['name', 'value_type', 'reader', 'ts_frequency', 'publication_lag']
     CONTROLLER_SIGNATURE = ['name', 'status',
                             'n_total', 'before_value_miss', 'before_value_miss_pct',
                             'after_value_miss', 'after_value_miss_pct',

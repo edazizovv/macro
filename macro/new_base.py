@@ -10,8 +10,8 @@ import pandas
 
 
 #
-from macro.new_base_utils import new_read, my_hex
-from macro.new_constants import DataReadingConstants, SystemFilesSignatures, Routing
+from macro.new_base_utils import new_read, my_hex    # TODO: to be replaced with the correct new read
+from macro._new_constants import DataReadingConstants, SystemFilesSignatures, Routing   # TODO: to be refactored
 
 
 #
