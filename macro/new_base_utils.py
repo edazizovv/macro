@@ -28,9 +28,9 @@ def new_read(source_formatter, name, reader, value_type):
 
     series = reader.read(source_formatter=source_formatter, name=name)
     if not (series.shape[1] == 2):
-        return DQControlsErrors.DIM_ERROR, None, None, None
+        raise Exception(DQControlsErrors.DIM_ERROR)
     if not (series.columns[0] == DataReadingConstants.DATE_COLUMN):
-        return DQControlsErrors.DATE_COL_ERROR, None, None, None
+        raise Exception(DQControlsErrors.DATE_COL_ERROR)
 
     series = series.sort_values(by=DataReadingConstants.DATE_COLUMN)
     series.loc[numpy.isin(series[name].values, ValueTypes.MISSING), name] = numpy.nan
