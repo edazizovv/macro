@@ -12,7 +12,11 @@ import pandas
 #
 from macro.new_base_utils import new_read, my_hex    # TODO: to be replaced with the correct new read
 from macro._new_constants import DataReadingConstants, SystemFilesSignatures, Routing   # TODO: to be refactored
-
+from macro.new_constants import (
+    PROJECT_STRUCTURE as PJST,
+    LOADING_DOCK as LD,
+)
+from macro.new_utils.readers import READERS
 
 #
 class Phaser:
@@ -58,24 +62,25 @@ class TSCreator:
 
 
 class Vice:
-    def __init__(self, name=None, values=None, index=None, value_type=None, ts_frequency=None):
+    def __init__(self, name=None, values=None, index=None, value_type=None, ts_frequency=None, publication_lag=None):
 
         self.name = name
         self.values = values
         self.index = index
         self.value_type = value_type
         self.ts_frequency = ts_frequency
+        self.publication_lag = publication_lag
         self.series = pandas.Series(data=self.values, index=self.index)
 
     def to_unholy_vice(self, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt):
 
-        av = UnholyVice(name=self.name, values=self.values, index=self.index, value_type=self.value_type, ts_frequency=self.ts_frequency,
+        av = UnholyVice(name=self.name, values=self.values, index=self.index, value_type=self.value_type, ts_frequency=self.ts_frequency, publication_lag=self.publication_lag,
                         lag_start_dt=lag_start_dt, start_dt=start_dt, lag_mid_dt=lag_mid_dt, mid_dt=mid_dt, end_dt=end_dt)
         return av
 
 
 class UnholyVice:
-    def __init__(self, name=None, values=None, index=None, value_type=None, ts_frequency=None,
+    def __init__(self, name=None, values=None, index=None, value_type=None, ts_frequency=None, publication_lag=None,
                  lag_start_dt=None, start_dt=None, lag_mid_dt=None, mid_dt=None, end_dt=None):
 
         self.name = name
@@ -87,6 +92,8 @@ class UnholyVice:
         self.value_type = value_type
         self.ts_frequency = ts_frequency
         self._series = pandas.Series(data=self._values, index=self._index)
+
+        self.publication_lag = publication_lag
 
         if lag_start_dt is not None:
             self.lag_start_dt = pandas.to_datetime(lag_start_dt).isoformat()
@@ -494,21 +501,23 @@ class Projector:
 
 
 class Item:
-    def __init__(self, name, loader_source, controller_source):
+    def __init__(self, name):
 
         self.name = name
-        self._loader_source = loader_source
-        self._controller_source = controller_source
 
-        self.loader = None
-        self.controller = None
+        self.pod_summary = None
+
         self.series = None
         self.value_type = None
         self.ts_frequency = None
         # TODO: calendar logic to be implemented in future versions
         # self.ts_calendar = None
 
-        self._process_loader()
+        self.reader = None
+
+        self.publication_lag = None
+
+        self._load_pod()
         self._process_series()
     @property
     def parametrization(self):
@@ -526,36 +535,46 @@ class Item:
     def parametrization_hash(self):
         hashed = my_hex(self.parametrization)
         return hashed
-    def _process_loader(self):
-
-        self.loader = pandas.read_excel(self._loader_source)
-        assert all([x in self.loader.columns.values for x in SystemFilesSignatures.LOADER_SIGNATURE])
-
+    def _load_pod(self):
+        self.pod_summary = pandas.read_excel(PJST.LOADING_DOCK.CTRL_FPATH, sheet_name=LD.DC_POD.OUTPUT_SHEET)
+        assert all([x in self.pod_summary.columns.values for x in SystemFilesSignatures.CONTROLLER_SIGNATURE])
     def _process_series(self):
 
-        self.controller = pandas.read_excel(self._controller_source)
-        assert all([x in self.controller.columns.values for x in SystemFilesSignatures.CONTROLLER_SIGNATURE])
+        ok_summary = self.pod_summary[self.pod_summary['status'] == "OK"].copy()
+        assert self.name in ok_summary['name'].values
 
-        assert self.name in self.controller['name'].values
+        name_in_pod = ok_summary.loc[ok_summary['name'] == self.name]
 
-        name_in_controller = self.controller.loc[self.controller['name'] == self.name]
+        self.value_type = name_in_pod['value_type'].values[0]
+        self.ts_frequency = name_in_pod['ts_frequency'].values[0]
+        self.publication_lag = name_in_pod['publication_lag'].values[0]
 
-        self.value_type = name_in_controller['value_type'].values[0]
-        self.ts_frequency = name_in_controller['ts_frequency'].values[0]
+        reader = name_in_pod['reader'].values[0]
+        reader = READERS[reader]
+        reader = reader()
+        self.reader = reader
+
+        dock_d = PJST.LOADING_DOCK.CTRL_FPATH
+        dock = pandas.read_excel(dock_d)
+        dock = dock.set_index(LD.DC_POD.DOCK_INDEX_COLUMN)
+        dock_path = dock.loc[LD.DC_POD.POD_ROW, LD.DC_POD.LOCATOR_COLUMN]
 
         # self.series = pandas.read_csv(Routing.DATA_SOURCE_FORMATTER.format(self.name),
         #                               sep=DataReadingConstants.CSV_SEPARATOR)
 
-        self.series = new_read(source_formatter=Routing.DATA_SOURCE_FORMATTER,
-                               name=self.name, value_type=self.value_type)
+        self.series = new_read(source_formatter=f"{dock_path}{LD.DC_POD.POD_FOLDER}",
+                               name=self.name, reader=self.reader, value_type=self.value_type)
+
+        self.series[self.name] = self.series[self.name].shift(self.publication_lag)
+        self.series = self.series.iloc[self.publication_lag:].copy()
 
         hashed = hashlib.sha256(pandas.util.hash_pandas_object(self.series).values).hexdigest()
 
-        hashed_control = name_in_controller['hashed'].values[0]
+        hashed_control = name_in_pod['hashed'].values[0]
         assert hashed == hashed_control
 
         # TODO: calendar logic to be implemented in future versions
-        # self.ts_calendar = name_in_controller['ts_calendar'].values[0]
+        # self.ts_calendar = name_in_pod['ts_calendar'].values[0]
 
     def to_vice(self):
 
@@ -563,7 +582,8 @@ class Item:
                       values=self.series[self.name].values,
                       index=self.series[DataReadingConstants.DATE_COLUMN].values,
                       value_type=self.value_type,
-                      ts_frequency=self.ts_frequency)
+                      ts_frequency=self.ts_frequency,
+                      publication_lag=self.publication_lag)
         return result
 
 
@@ -677,13 +697,13 @@ class FoldGenerator:
         else:
             self.current_fold = fold_n
 
-        fold_size = (timeaxis.shape[0] - self.joint_lag) / (1 + self.overlap_rate * (self.n_folds - 1))
+        fold_size = (timeaxis.shape[0] - self.joint_lag) / (1 + (1 - self.overlap_rate) * (self.n_folds - 1))
 
-        lag_start_int = int(fold_size * self.overlap_rate * self.current_fold)
-        start_int = int(fold_size * self.overlap_rate * self.current_fold) + self.joint_lag
-        lag_mid_int = int(fold_size * (self.overlap_rate * self.current_fold + self.val_rate))
-        mid_int = int(fold_size * (self.overlap_rate * self.current_fold + self.val_rate)) + self.joint_lag
-        end_int = min(int(fold_size * (self.overlap_rate * self.current_fold + 1)) + self.joint_lag, timeaxis.shape[0] - 1)
+        lag_start_int = int(fold_size * (1 - self.overlap_rate) * self.current_fold)
+        start_int = int(fold_size * (1 - self.overlap_rate) * self.current_fold) + self.joint_lag
+        lag_mid_int = int(fold_size * ((1 - self.overlap_rate) * self.current_fold + self.val_rate))
+        mid_int = int(fold_size * ((1 - self.overlap_rate) * self.current_fold + self.val_rate)) + self.joint_lag
+        end_int = min(int(fold_size * ((1 - self.overlap_rate) * self.current_fold + 1)) + self.joint_lag, timeaxis.shape[0] - 1)
 
         lag_start_dt = timeaxis[lag_start_int]
         start_dt = timeaxis[start_int]

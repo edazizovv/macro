@@ -7,6 +7,7 @@ import pandas
 
 
 #
+from raise_fold_generator import fg, start_date, end_date
 from macro.new_base import Path, Projector, Item
 from macro.new_base_test_projectors import WindowAppGenerator
 from macro.new_base_trueuse_phase0_garage import VincentClassFeatureEngineeringDeck
@@ -15,7 +16,6 @@ from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metr
 from scipy import stats
 from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
 from macro.functional import sd_metric, pv_metric
-from raise_fold_generator import fg, start_date, end_date
 
 #
 target = 'IVV_aggmean_pct'

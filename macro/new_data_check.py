@@ -82,7 +82,7 @@ def controller_view(loader, name):
     return original_series, type_controlled_series, series_ts_controlled
 
 
-def load_pod_item(source_formatter, name, reader, value_type, ts_frequency):
+def load_pod_item(source_formatter, name, reader, value_type, ts_frequency, publication_lag):
 
     series = new_read(source_formatter=source_formatter, name=name, reader=reader, value_type=value_type)
 
@@ -110,6 +110,9 @@ def load_pod_item(source_formatter, name, reader, value_type, ts_frequency):
                                                       left_on=DataReadingConstants.DATE_COLUMN,
                                                       right_on=DataReadingConstants.DATE_COLUMN,
                                                       how='left')
+    series[name] = series[name].shift(publication_lag)
+    series = series.iloc[publication_lag:].copy()
+    # series = series.shift(publication_lag).iloc[publication_lag:].copy()
     check_before_value_miss = pandas.isna(series[name]).sum()
     check_after_value_miss = pandas.isna(series_ts_controlled[name]).sum()
 
@@ -148,7 +151,8 @@ def pod_loader():
             name=controller['name'].values[i],
             reader=reader,
             value_type=controller['value_type'].values[i],
-            ts_frequency=controller['ts_frequency'].values[i]
+            ts_frequency=controller['ts_frequency'].values[i],
+            publication_lag=controller['publication_lag'].values[i],
         )
         statuses.append(status)
         before_value_misses.append(before_value_miss)
@@ -166,7 +170,9 @@ def pod_loader():
                                     'after_value_miss_pct': after_value_misses_pct,
                                     'hashed': hashed_values,
                                     'value_type': controller['value_type'].values,
-                                    'ts_frequency': controller['ts_frequency'].values})
+                                    'ts_frequency': controller['ts_frequency'].values,
+                                    'publication_lag': controller['publication_lag'].values,
+                                    'reader': controller['reader'].values})
     assert result.columns.values.tolist() == SystemFilesSignatures.CONTROLLER_SIGNATURE
     with pandas.ExcelWriter(dock_d, mode="a", if_sheet_exists="replace") as writer:
         result.to_excel(writer, sheet_name=LD.DC_POD.OUTPUT_SHEET, index=False)

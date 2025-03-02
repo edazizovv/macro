@@ -15,13 +15,13 @@ from macro.new_base_test_projectors_translate import a_function_translator, a_fu
 
 
 #
-loader_source = '../data/data_meta/loader_pitch.xlsx'
-controller_source = '../data/other/controller_pitch.xlsx'
+# loader_source = '../data/data_meta/loader_pitch.xlsx'
+# controller_source = '../data/other/controller_pitch.xlsx'
 
 source_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='sources')
 path_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='prog')
 
-sources = ([Item(name=x, loader_source=loader_source, controller_source=controller_source) for x in source_xl['source'].values if x in path_xl['vertices_in'].values])
+sources = ([Item(name=x) for x in source_xl['source'].values if x in path_xl['vertices_in'].values])
 
 
 vertices_out = path_xl['vertices_out'].values

@@ -47,4 +47,5 @@ class SystemFilesSignatures:
                             'n_total', 'before_value_miss', 'before_value_miss_pct',
                             'after_value_miss', 'after_value_miss_pct',
                             'hashed',
-                            'value_type', 'ts_frequency']
+                            'value_type', 'ts_frequency', 'publication_lag',
+                            'reader']
