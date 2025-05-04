@@ -417,11 +417,17 @@ class SimpleAggregator:
     @property
     def lag(self):
         return self.window
+    def decide_on_missing(self, n_missing):
+        if n_missing > 0:
+            return 1
+        else:
+            return 0
 
 
 class SimpleCasterAggMonth:
     def __init__(self):
         self.ts_frequency = 'MS'
+        self.ts_delta = pandas.to_datetime("2010-02-01").to_period("M") - pandas.to_datetime("2010-01-01").to_period("M")
     @property
     def parametrization(self):
         dictated = tuple([my_hex('SimpleCasterAggMonth'),

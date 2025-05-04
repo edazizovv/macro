@@ -17,7 +17,7 @@ from macro.new_base_test_projectors_translate import a_function_translator, a_fu
 #
 # loader_source = '../data/data_meta/loader_pitch.xlsx'
 # controller_source = '../data/other/controller_pitch.xlsx'
-
+"""
 source_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='sources')
 path_xl = pandas.read_excel('../data/data_meta/vector.xlsx', sheet_name='prog')
 
@@ -67,6 +67,9 @@ for j in range(path_xl.shape[0]):
     path_pseudo_edges[j] = projector
 
 features = path_xl.loc[path_xl['active'] == 'Y', 'vertices_out'].values.tolist()
+"""
+
+sc = SimpleCasterAggMonth()
 
 vxl = pandas.read_excel('../data/data_meta/vincent.xlsx', sheet_name='mobsters')
 name_list = vxl['transform_name'].values.tolist()

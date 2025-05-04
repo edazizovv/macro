@@ -62,26 +62,33 @@ class TSCreator:
 
 
 class Vice:
-    def __init__(self, name=None, values=None, index=None, value_type=None, ts_frequency=None, publication_lag=None):
+    def __init__(self, name=None, values=None, index=None, value_type=None, ts_frequency=None, ts_delta=None, publication_lag=None, start_history=None):
 
         self.name = name
         self.values = values
         self.index = index
         self.value_type = value_type
         self.ts_frequency = ts_frequency
+        self.ts_delta = ts_delta
         self.publication_lag = publication_lag
+        self.start_history = start_history
         self.series = pandas.Series(data=self.values, index=self.index)
 
-    def to_unholy_vice(self, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt):
+    def to_unholy_vice(self, lag_first_start_dt, first_start_dt, first_end_dt, lag_second_start_dt, second_start_dt, second_end_dt):
 
-        av = UnholyVice(name=self.name, values=self.values, index=self.index, value_type=self.value_type, ts_frequency=self.ts_frequency, publication_lag=self.publication_lag,
-                        lag_start_dt=lag_start_dt, start_dt=start_dt, lag_mid_dt=lag_mid_dt, mid_dt=mid_dt, end_dt=end_dt)
+        av = UnholyVice(name=self.name, values=self.values, index=self.index, value_type=self.value_type,
+                        ts_frequency=self.ts_frequency, ts_delta=self.ts_delta,
+                        publication_lag=self.publication_lag, start_history=self.start_history,
+                        lag_first_start_dt=lag_first_start_dt, first_start_dt=first_start_dt, first_end_dt=first_end_dt,
+                        lag_second_start_dt=lag_second_start_dt, second_start_dt=second_start_dt, second_end_dt=second_end_dt)
         return av
 
 
 class UnholyVice:
-    def __init__(self, name=None, values=None, index=None, value_type=None, ts_frequency=None, publication_lag=None,
-                 lag_start_dt=None, start_dt=None, lag_mid_dt=None, mid_dt=None, end_dt=None):
+    def __init__(self, name=None, values=None, index=None, value_type=None,
+                 ts_frequency=None, ts_delta=None,
+                 publication_lag=None, start_history=None,
+                 lag_first_start_dt=None, first_start_dt=None, first_end_dt=None, lag_second_start_dt=None, second_start_dt=None, second_end_dt=None):
 
         self.name = name
         self._values = values
@@ -91,40 +98,51 @@ class UnholyVice:
             self._index = index
         self.value_type = value_type
         self.ts_frequency = ts_frequency
+        self.ts_delta = ts_delta
         self._series = pandas.Series(data=self._values, index=self._index)
 
         self.publication_lag = publication_lag
+        self.start_history = start_history
 
-        if lag_start_dt is not None:
-            self.lag_start_dt = pandas.to_datetime(lag_start_dt).isoformat()
+        if lag_first_start_dt is not None:
+            self.lag_first_start_dt = pandas.to_datetime(lag_first_start_dt).isoformat()
         else:
-            self.lag_start_dt = None
-        if start_dt is not None:
-            self.start_dt = pandas.to_datetime(start_dt).isoformat()
+            self.lag_first_start_dt = None
+        if first_start_dt is not None:
+            self.first_start_dt = pandas.to_datetime(first_start_dt).isoformat()
         else:
-            self.start_dt = None
-        if lag_mid_dt is not None:
-            self.lag_mid_dt = pandas.to_datetime(lag_mid_dt).isoformat()
+            self.first_start_dt = None
+        if first_end_dt is not None:
+            self.first_end_dt = pandas.to_datetime(first_end_dt).isoformat()
         else:
-            self.lag_mid_dt = None
-        if mid_dt is not None:
-            self.mid_dt = pandas.to_datetime(mid_dt).isoformat()
+            self.first_end_dt = None
+        if lag_second_start_dt is not None:
+            self.lag_second_start_dt = pandas.to_datetime(lag_second_start_dt).isoformat()
         else:
-            self.mid_dt = None
-        if end_dt is not None:
-            self.end_dt = pandas.to_datetime(end_dt).isoformat()
+            self.lag_second_start_dt = None
+        if second_start_dt is not None:
+            self.second_start_dt = pandas.to_datetime(second_start_dt).isoformat()
         else:
-            self.end_dt = None
+            self.second_start_dt = None
+        if second_end_dt is not None:
+            self.second_end_dt = pandas.to_datetime(second_end_dt).isoformat()
+        else:
+            self.second_end_dt = None
 
         self._signature = None
 
     @property
     def parametrization(self):
-        dictated = tuple([my_hex(self.lag_start_dt),
-                          my_hex(self.start_dt),
-                          my_hex(self.lag_mid_dt),
-                          my_hex(self.mid_dt),
-                          my_hex(self.end_dt)])
+        dictated = tuple([my_hex(self.lag_first_start_dt),
+                          my_hex(self.first_start_dt),
+                          my_hex(self.first_end_dt),
+                          my_hex(self.lag_second_start_dt),
+                          my_hex(self.second_start_dt),
+                          my_hex(self.second_end_dt),
+                          my_hex(self.publication_lag),
+                          my_hex(self.start_history),
+                          my_hex(self.ts_frequency),
+                          my_hex(self.ts_delta)])
         return dictated
     @property
     def parametrization_hash(self):
@@ -171,7 +189,7 @@ class UnholyVice:
 
     @property
     def ix_lag_mask_first(self):
-        result = (self._index >= self.lag_start_dt) * (self._index < self.mid_dt)
+        result = (self._index >= self.lag_first_start_dt) * (self._index <= self.first_end_dt)
         return result
 
     @property
@@ -191,7 +209,7 @@ class UnholyVice:
 
     @property
     def ix_current_mask_first(self):
-        result = (self._index >= self.start_dt) * (self._index < self.mid_dt)
+        result = (self._index >= self.first_start_dt) * (self._index <= self.first_end_dt)
         return result
 
     @property
@@ -211,7 +229,7 @@ class UnholyVice:
 
     @property
     def ix_lag_mask_second(self):
-        result = (self._index >= self.lag_mid_dt) * (self._index < self.end_dt)
+        result = (self._index >= self.lag_second_start_dt) * (self._index <= self.second_end_dt)
         return result
 
     @property
@@ -231,7 +249,7 @@ class UnholyVice:
 
     @property
     def ix_current_mask_second(self):
-        result = (self._index >= self.mid_dt) * (self._index < self.end_dt)
+        result = (self._index >= self.second_start_dt) * (self._index <= self.second_end_dt)
         return result
 
     @property
@@ -300,6 +318,49 @@ class Projector:
         hashed = my_hex(self.parametrization)
         return hashed
 
+    def downcast_tx(self, vices):
+        """
+        Recalculate start_history wrt to the aggregation
+
+        :param vices:
+        :return:
+        """
+
+        assert len(list(vices.keys())) == 1
+        name = list(vices.keys())[0]
+        vice = vices[name]
+
+        new_histories = {}
+
+        agg = self._agg_function(**self.agg_function_kwg)
+
+        for history_piece in vice.start_history.keys():
+
+            start_history = vice.start_history[history_piece]
+
+            start_history_casted = pandas.Series(data=[start_history]).apply(func=self.ts_creator.cast).values[0]
+            start_history_casted_prev = pandas.to_datetime([start_history_casted]).shift(-1, freq=self.ts_creator.ts_frequency)[0]
+
+            ts_ranged = pandas.date_range(start=start_history_casted_prev, end=start_history, freq=vice.ts_frequency)
+            ts_ranged_casted = ts_ranged.to_series().apply(func=self.ts_creator.cast)
+            ts_ranged = ts_ranged[(ts_ranged_casted == start_history_casted) & (ts_ranged < start_history)]
+
+            n_missing = ts_ranged.shape[0]
+
+            decision_lag = agg.decide_on_missing(n_missing=n_missing)
+
+            new_start_history = pandas.to_datetime([start_history_casted]).shift(decision_lag + agg.lag, freq=self.ts_creator.ts_frequency)[0].isoformat()
+
+            new_histories[history_piece] = new_start_history
+
+        result_vice = UnholyVice(values=None, index=None,
+                                 value_type=agg.value_type, ts_frequency=self.ts_creator.ts_frequency,
+                                 lag_first_start_dt=None, first_start_dt=None, first_end_dt=None,
+                                 lag_second_start_dt=None, second_start_dt=None, second_end_dt=None,
+                                 start_history=new_histories,)
+
+        return result_vice
+
     def downcast(self, vices):
         """
         Decrease frequency with agg function
@@ -327,28 +388,19 @@ class Projector:
         new_series_first_agg = self.agg_function.project_first({name: new_series_first})
         new_series_second_agg = self.agg_function.project_second({name: new_series_second})
 
-        casted_lag_first = vice.lag_series_first.index.to_series().apply(func=self.ts_creator.cast)
-        casted_lag_second = vice.lag_series_second.index.to_series().apply(func=self.ts_creator.cast)
-        casted_first = vice.current_series_first.index.to_series().apply(func=self.ts_creator.cast)
-        casted_second = vice.current_series_second.index.to_series().apply(func=self.ts_creator.cast)
+        new_lag_first_start = vice.lag_series_first.index.to_series().apply(func=self.ts_creator.cast).shift(self.agg_function.lag, freq=self.ts_creator.ts_frequency)[0]
+        new_first_start = vice.first_start_dt
+        new_first_end = vice.first_end_dt
+        new_lag_second_start = vice.lag_series_second.index.to_series().apply(func=self.ts_creator.cast).shift(self.agg_function.lag, freq=self.ts_creator.ts_frequency)[0]
+        new_second_start = vice.second_start_dt
+        new_second_end = vice.second_end_dt
 
-        if self.agg_function.lag == 0:
-            new_lag_start = pandas.to_datetime(casted_lag_first.index).shift(1, freq=self.ts_creator.ts_frequency).shift(-1, freq=self.ts_creator.ts_frequency)[0].isoformat()
-            new_lag_mid = pandas.to_datetime(casted_lag_second.index).shift(1, freq=self.ts_creator.ts_frequency).shift(-1, freq=self.ts_creator.ts_frequency)[0].isoformat()
-        else:
-            new_lag_start = pandas.to_datetime(casted_lag_first.index).shift(self.agg_function.lag, freq=self.ts_creator.ts_frequency)[0].isoformat()
-            new_lag_mid = pandas.to_datetime(casted_lag_second.index).shift(self.agg_function.lag, freq=self.ts_creator.ts_frequency)[0].isoformat()
-        new_start = pandas.to_datetime([casted_first.index[0]]).shift(1, freq=self.ts_creator.ts_frequency).shift(-1, freq=self.ts_creator.ts_frequency)[0].isoformat()
-        new_mid = pandas.to_datetime([casted_second.index[0]]).shift(1, freq=self.ts_creator.ts_frequency).shift(-1, freq=self.ts_creator.ts_frequency)[0].isoformat()
-        new_end = pandas.to_datetime([casted_second.index[-1]]).shift(1, freq=self.ts_creator.ts_frequency)[0].isoformat()
-
-        joint = pandas.concat((new_series_first_agg, new_series_second_agg[new_series_second_agg.index >= new_mid]), axis=0)
+        joint = pandas.concat((new_series_first_agg[new_series_first_agg.index <= new_first_end], new_series_second_agg[new_series_second_agg.index >= new_second_start]), axis=0)
 
         result_vice = UnholyVice(values=joint.values, index=joint.index,
                                  value_type=self.agg_function.value_type, ts_frequency=self.ts_creator.ts_frequency,
-                                 lag_start_dt=new_lag_start, start_dt=new_start,
-                                 lag_mid_dt=new_lag_mid, mid_dt=new_mid,
-                                 end_dt=new_end)
+                                 lag_first_start_dt=new_lag_first_start, first_start_dt=new_first_start, first_end_dt=new_first_end,
+                                 lag_second_start_dt=new_lag_second_start, second_start_dt=new_second_start, second_end_dt=new_second_end)
         result_vice.sign(incoming_chain=input_hash, projector_hash=self.parametrization_hash)
         return result_vice
     def control_missing(self, series):
@@ -403,6 +455,43 @@ class Projector:
         ss = series.copy().reset_index()
         if not (ss.groupby(by='index').count() == 1).all().all():
             raise Exception("Duplicates found: for recast should contain no duplicates")
+
+    def recast_tx(self, vices):
+        """
+        Recalculate start_history wrt to the aggregation
+
+        :param vices:
+        :return:
+        """
+
+        joint_freq = numpy.unique([vices[name].ts_frequency for name in vices.keys()])[0]
+
+        app = self._app_function(**self.app_function_kwg)
+
+        new_histories = {}
+        for vice_key in vices.keys():
+            vice = vices[vice_key]
+
+            for history_piece in vice.start_history.keys():
+
+                start_history = vice.start_history[history_piece]
+
+                new_start_history = pandas.to_datetime([start_history]).shift(app.lag, freq=joint_freq)[0].isoformat()
+
+                if history_piece not in new_histories.keys():
+                    new_histories[history_piece] = new_start_history
+                else:
+                    new_start_history = max(new_histories[history_piece], new_start_history)
+                    new_histories[history_piece] = new_start_history
+
+        result_vice = UnholyVice(values=None, index=None,
+                                 value_type=app.value_type, ts_frequency=self.ts_creator.ts_frequency,
+                                 lag_first_start_dt=None, first_start_dt=None, first_end_dt=None,
+                                 lag_second_start_dt=None, second_start_dt=None, second_end_dt=None,
+                                 start_history=new_histories,)
+
+        return result_vice
+
     def recast(self, vices):
         """
         Make representation of same frequency with app function
@@ -441,9 +530,10 @@ class Projector:
         # print('two_series: second', run_time)
 
         # run_time = time.time()
-        assert numpy.unique([vices[name].start_dt for name in vices.keys()]).shape[0] == 1
-        assert numpy.unique([vices[name].mid_dt for name in vices.keys()]).shape[0] == 1
-        assert numpy.unique([vices[name].end_dt for name in vices.keys()]).shape[0] == 1
+        assert numpy.unique([vices[name].first_start_dt for name in vices.keys()]).shape[0] == 1
+        assert numpy.unique([vices[name].first_end_dt for name in vices.keys()]).shape[0] == 1
+        assert numpy.unique([vices[name].second_start_dt for name in vices.keys()]).shape[0] == 1
+        assert numpy.unique([vices[name].second_end_dt for name in vices.keys()]).shape[0] == 1
 
         assert numpy.unique([vices[name].ts_frequency for name in vices.keys()]).shape[0] == 1
         # run_time = time.time() - run_time
@@ -454,30 +544,48 @@ class Projector:
         # print('joint_freq', run_time)
 
         # run_time = time.time()
-        new_lag_start = pandas.to_datetime(new_series_first_app.index).shift(self.app_function.lag, freq=joint_freq)[0].isoformat()
-        new_start = numpy.unique([vices[name].start_dt for name in vices.keys()])[0]
-        new_lag_mid = pandas.to_datetime(new_series_second_app.index).shift(self.app_function.lag, freq=joint_freq)[0].isoformat()
-        new_mid = numpy.unique([vices[name].mid_dt for name in vices.keys()])[0]
-        new_end = numpy.unique([vices[name].end_dt for name in vices.keys()])[0]
+        new_lag_first_start_dt = pandas.to_datetime(new_series_first_app.index).shift(self.app_function.lag, freq=joint_freq)[0].isoformat()
+        new_first_start_dt = numpy.unique([vices[name].first_start_dt for name in vices.keys()])[0]
+        new_first_end_dt = numpy.unique([vices[name].first_end_dt for name in vices.keys()])[0]
+        new_lag_second_start_dt = pandas.to_datetime(new_series_second_app.index).shift(self.app_function.lag, freq=joint_freq)[0].isoformat()
+        new_second_start_dt = numpy.unique([vices[name].second_start_dt for name in vices.keys()])[0]
+        new_second_end_dt = numpy.unique([vices[name].second_end_dt for name in vices.keys()])[0]
         # run_time = time.time() - run_time
         # print('lag_recalc', run_time)
 
+        assert new_lag_first_start_dt in new_series_first_app.index
+        assert pandas.to_datetime([new_first_end_dt]).shift(-1, freq=joint_freq)[0].isoformat() in new_series_first_app.index
+        assert new_second_start_dt in new_series_second_app.index
+        assert pandas.to_datetime([new_second_end_dt]).shift(-1, freq=joint_freq)[0].isoformat() in new_series_second_app.index
+
+
         # run_time = time.time()
-        joint = pandas.concat((new_series_first_app, new_series_second_app[new_series_second_app.index >= new_mid]),
+        joint = pandas.concat((
+            new_series_first_app[new_series_first_app.index >= new_lag_first_start_dt],
+            new_series_second_app[new_series_second_app.index >= new_second_start_dt],
+        ),
                               axis=0)
         # run_time = time.time() - run_time
         # print('concat', run_time)
         # run_time = time.time()
         result_vice = UnholyVice(values=joint.values, index=joint.index,
                                  value_type=self.app_function.value_type, ts_frequency=joint_freq,
-                                 lag_start_dt=new_lag_start, start_dt=new_start,
-                                 lag_mid_dt=new_lag_mid, mid_dt=new_mid,
-                                 end_dt=new_end)
+                                 lag_first_start_dt=new_lag_first_start_dt, first_start_dt=new_first_start_dt, first_end_dt=new_first_end_dt,
+                                 lag_second_start_dt=new_lag_second_start_dt, second_start_dt=new_second_start_dt, second_end_dt=new_second_end_dt)
         result_vice.sign(incoming_chain=input_hash, projector_hash=self.parametrization_hash)
         # run_time = time.time() - run_time
         # print('unholy_vice', run_time)
         return result_vice
 
+    def find_lag(self, vs):
+        if self.role == 'downcast':
+            return self.downcast_tx(vices=vs)
+        elif self.role == 'upcast':
+            raise Exception()
+        elif self.role == 'recast':
+            return self.recast_tx(vices=vs)
+        else:
+            raise Exception()
     def fit_transform(self, vs):
         self.fit = False
         if self.role == 'downcast':
@@ -510,12 +618,14 @@ class Item:
         self.series = None
         self.value_type = None
         self.ts_frequency = None
+        self.ts_delta = None
         # TODO: calendar logic to be implemented in future versions
         # self.ts_calendar = None
 
         self.reader = None
 
         self.publication_lag = None
+        self.start_history = None
 
         self._load_pod()
         self._process_series()
@@ -529,7 +639,9 @@ class Item:
                           date_hash,
                           value_hash,
                           my_hex(self.value_type),
-                          my_hex(self.ts_frequency)])
+                          my_hex(self.ts_frequency),
+                          my_hex(self.ts_delta),
+                          my_hex(self.start_history)])
         return dictated
     @property
     def parametrization_hash(self):
@@ -567,6 +679,7 @@ class Item:
 
         self.series[self.name] = self.series[self.name].shift(self.publication_lag)
         self.series = self.series.iloc[self.publication_lag:].copy()
+        self.start_history = self.series[DataReadingConstants.DATE_COLUMN].min()
 
         hashed = hashlib.sha256(pandas.util.hash_pandas_object(self.series).values).hexdigest()
 
@@ -583,7 +696,9 @@ class Item:
                       index=self.series[DataReadingConstants.DATE_COLUMN].values,
                       value_type=self.value_type,
                       ts_frequency=self.ts_frequency,
-                      publication_lag=self.publication_lag)
+                      ts_delta=self.ts_delta,
+                      publication_lag=self.publication_lag,
+                      start_history={self.name: self.start_history})
         return result
 
 
@@ -664,12 +779,13 @@ class TimeAxe:
     ...
 
 class FoldGenerator:
-    def __init__(self, n_folds, joint_lag=None, val_rate=0.5, overlap_rate=0.5, verbose=False):
+    def __init__(self, n_folds, joint_lag=None, val_rate=0.5, overlap_rate=0.5, freq=None, verbose=False):
         self.n_folds = n_folds
         self.joint_lag = joint_lag
         self.current_fold = -1
         self.val_rate = val_rate
         self.overlap_rate = overlap_rate
+        self.freq = freq
         self.path = None
         self.verbose = verbose
     def copy(self):
@@ -678,11 +794,47 @@ class FoldGenerator:
         return f
     def set_lag(self, joint_lag):
         self.joint_lag = joint_lag
+    def set_lag_from_delta(self, lag_delta, timeaxis):
+        n_lagged = timeaxis[timeaxis <= (timeaxis[0] + lag_delta)].shape[0]
+        self.set_lag(joint_lag=n_lagged)
     def init_path(self, path_vertices, path_matrix, path_pseudo_edges, save_features):
         self.path = Path(path_vertices, path_matrix, path_pseudo_edges, save_features)
     @property
     def folds(self):
         return list(range(self.n_folds))
+    def find_lags(self, sources, features, target):
+        self.path.find_lags(sources=sources,
+                        features=features)
+        history_pieces = numpy.unique([x for name in features for x in self.path.stock[name].start_history.keys()])
+        sources_starts = {source.name: source.start_history for source in sources}
+
+        unique_histories = {}
+        diffs = []
+        for history_piece in history_pieces:
+            for name in features:
+                if history_piece in self.path.stock[name].start_history.keys():
+                    diff = (pandas.to_datetime(self.path.stock[name].start_history[history_piece])
+                            - pandas.to_datetime(sources_starts[history_piece]))
+                    diffs.append(diff)
+                    if history_piece in unique_histories.keys():
+                        new_history = max(unique_histories[history_piece], self.path.stock[name].start_history[history_piece])
+                        unique_histories[history_piece] = new_history
+                    else:
+                        unique_histories[history_piece] = self.path.stock[name].start_history[history_piece]
+
+        max_diff = max(diffs)
+        max_history = max(list(unique_histories.values()))
+        end_history = min([source.series[DataReadingConstants.DATE_COLUMN].values[-1] for source in sources])
+
+        ts_frequency = self.path.stock[target].ts_frequency
+
+        suggested_start = pandas.to_datetime(max_history)
+        suggested_lag = max_diff
+
+        self.freq.delta = max_diff
+
+        date_range = pandas.date_range(start=suggested_start, end=end_history, freq=ts_frequency)
+        return date_range, suggested_lag
     def fold(self, sources, features, timeaxis, fold_n=None):
         if self.joint_lag is None:
             raise Exception("Fold generation impossible: joint_lag not specified")
@@ -697,34 +849,39 @@ class FoldGenerator:
         else:
             self.current_fold = fold_n
 
-        fold_size = (timeaxis.shape[0] - self.joint_lag) / (1 + (1 - self.overlap_rate) * (self.n_folds - 1))
+        fold_size = timeaxis.shape[0] / (1 + (1 - self.overlap_rate) * (self.n_folds - 1))
 
-        lag_start_int = int(fold_size * (1 - self.overlap_rate) * self.current_fold)
-        start_int = int(fold_size * (1 - self.overlap_rate) * self.current_fold) + self.joint_lag
-        lag_mid_int = int(fold_size * ((1 - self.overlap_rate) * self.current_fold + self.val_rate))
-        mid_int = int(fold_size * ((1 - self.overlap_rate) * self.current_fold + self.val_rate)) + self.joint_lag
-        end_int = min(int(fold_size * ((1 - self.overlap_rate) * self.current_fold + 1)) + self.joint_lag, timeaxis.shape[0] - 1)
+        start_int = int(fold_size * (1 - self.overlap_rate) * self.current_fold)
+        mid_int = int(fold_size * ((1 - self.overlap_rate) * self.current_fold + self.val_rate))
+        end_int = min(int(fold_size * ((1 - self.overlap_rate) * self.current_fold + 1)), timeaxis.shape[0] - 1)
 
-        lag_start_dt = timeaxis[lag_start_int]
-        start_dt = timeaxis[start_int]
-        lag_mid_dt = timeaxis[lag_mid_int]
-        mid_dt = timeaxis[mid_int]
-        end_dt = timeaxis[end_int]
+        lag_first_start_dt = pandas.to_datetime(timeaxis[start_int]) - self.freq.delta
+        first_start_dt = pandas.to_datetime(timeaxis[start_int])
+        first_end_dt = pandas.to_datetime([timeaxis[mid_int]]).shift(-1, freq=self.freq.to_end)[0]
+        lag_second_start_dt = pandas.to_datetime(timeaxis[mid_int]) - self.freq.delta
+        second_start_dt = pandas.to_datetime(timeaxis[mid_int])
+        second_end_dt = pandas.to_datetime([timeaxis[end_int]]).shift(-1, freq=self.freq.to_end)[0]
+
+        if self.current_fold > 0:
+            lag_first_start_dt = pandas.to_datetime([lag_first_start_dt]).shift(-1, freq=self.freq.freq)[0]
+        lag_second_start_dt = pandas.to_datetime([lag_second_start_dt]).shift(-1, freq=self.freq.freq)[0]
 
         if self.verbose:
 
-            print("Folding: {0} / {1} \n\n\tlag_start=\t{2}; \n\tstart=\t\t{3}; \n\tlag_mid=\t{4}; \n\tmid=\t\t{5}; \n\tend=\t\t{6}; \n\tval_rate=\t{7:.2f}\n\tsize=\t{8}".format(
-                self.current_fold, self.n_folds, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt, self.val_rate, end_int - mid_int
-            ))
+            print()
+            # print("Folding: {0} / {1} \n\n\tlag_start=\t{2}; \n\tstart=\t\t{3}; \n\tlag_mid=\t{4}; \n\tmid=\t\t{5}; \n\tend=\t\t{6}; \n\tval_rate=\t{7:.2f}\n\tsize=\t{8}".format(
+            #     self.current_fold, self.n_folds, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt, self.val_rate, end_int - mid_int
+            # ))
 
 
         self.path.route(sources=sources,
                         features=features,
-                        lag_start_dt=lag_start_dt,
-                        start_dt=start_dt,
-                        lag_mid_dt=lag_mid_dt,
-                        mid_dt=mid_dt,
-                        end_dt=end_dt)
+                        lag_first_start_dt=lag_first_start_dt,
+                        first_start_dt=first_start_dt,
+                        first_end_dt=first_end_dt,
+                        lag_second_start_dt=lag_second_start_dt,
+                        second_start_dt=second_start_dt,
+                        second_end_dt=second_end_dt)
 
         x_train = []
         for name in features:
@@ -740,6 +897,12 @@ class FoldGenerator:
             snippet.name = name
             x_test.append(snippet)
         x_test = pandas.concat(x_test, axis=1, ignore_index=False)
+
+        print(f"fold_sizes: {x_train.shape[0]}, {x_test.shape[0]}")
+        # pandas.isna(x_train).any(), pandas.isna(x_test).any()
+
+        assert not pandas.isna(x_train).any().any()
+        assert not pandas.isna(x_test).any().any()
 
         return x_train, x_test
 
@@ -763,6 +926,10 @@ class PathPreView:
     def children(self):
         result = self.path_vertices[self.path_matrix[self.ix, :]]
         return result
+    def find_lag_local(self, stock):
+        parental_stock = {s: stock[s] for s in stock.keys() if s in self.parents}
+        resulting_unh_vice = self.path_pseudo_edges[self.ix].find_lag(vs=parental_stock)
+        return resulting_unh_vice
     def grow_local(self, stock):
         parental_stock = {s: stock[s] for s in stock.keys() if s in self.parents}
         input_hash = my_hex(tuple([x.signature for x in parental_stock.values()]))
@@ -839,10 +1006,48 @@ class Path:
                              save_features=self.save_features,
                              selection=selection)
         return result
-    def route(self, sources, features, lag_start_dt, start_dt, lag_mid_dt, mid_dt, end_dt):
+    def find_lags(self, sources, features):
 
-        self.stock = {source.name: source.to_vice().to_unholy_vice(lag_start_dt=lag_start_dt, start_dt=start_dt, lag_mid_dt=lag_mid_dt, mid_dt=mid_dt, end_dt=end_dt) for source in sources}
-        self.stock_new = {source.name: source.to_vice().to_unholy_vice(lag_start_dt=lag_start_dt, start_dt=start_dt, lag_mid_dt=lag_mid_dt, mid_dt=mid_dt, end_dt=end_dt) for source in sources}
+        self.stock = {source.name: source.to_vice().to_unholy_vice(lag_first_start_dt=None, first_start_dt=None, first_end_dt=None, lag_second_start_dt=None, second_start_dt=None, second_end_dt=None) for source in sources}
+        self.stock_new = {source.name: source.to_vice().to_unholy_vice(lag_first_start_dt=None, first_start_dt=None, first_end_dt=None, lag_second_start_dt=None, second_start_dt=None, second_end_dt=None) for source in sources}
+        self.finish = False
+
+        while not self.finish:
+
+            self.seeds = {}
+            self.seeds_ung = {}
+
+            for sn in self.stock_new.keys():
+                children = self.path(sn).children
+                for child in children:
+                    if child not in self.stock.keys():
+                        parents = self.path(child).parents
+                        if numpy.isin(parents, list(self.stock.keys())).all():
+                            self.seeds[child] = {}
+                        else:
+                            self.seeds_ung[child] = {}
+            self.stock_new = {}
+            for seed in self.seeds_ung.keys():
+                parents = self.path(seed).parents
+                if numpy.isin(parents, list(self.stock.keys())).all():
+                    self.seeds[seed] = {}
+                    del self.seeds_ung[seed]
+
+            for seed in self.seeds:
+                run_time = time.time()
+                self.stock_new[seed] = self.path(seed).find_lag_local(
+                    stock=self.stock
+                )
+                self.stock[seed] = self.stock_new[seed]
+                run_time = time.time() - run_time
+
+            if numpy.isin(features, list(self.stock.keys())).all():
+                self.finish = True
+
+    def route(self, sources, features, lag_first_start_dt, first_start_dt, first_end_dt, lag_second_start_dt, second_start_dt, second_end_dt):
+
+        self.stock = {source.name: source.to_vice().to_unholy_vice(lag_first_start_dt=lag_first_start_dt, first_start_dt=first_start_dt, first_end_dt=first_end_dt, lag_second_start_dt=lag_second_start_dt, second_start_dt=second_start_dt, second_end_dt=second_end_dt) for source in sources}
+        self.stock_new = {source.name: source.to_vice().to_unholy_vice(lag_first_start_dt=lag_first_start_dt, first_start_dt=first_start_dt, first_end_dt=first_end_dt, lag_second_start_dt=lag_second_start_dt, second_start_dt=second_start_dt, second_end_dt=second_end_dt) for source in sources}
         self.finish = False
 
         for source in sources:

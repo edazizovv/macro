@@ -8,7 +8,10 @@ def r2_metric(x, y):
     return r2_score(y_pred=x, y_true=y)
 
 def pv_metric(x, y):
-    return stats.pearsonr(x, y)[0]
+    if numpy.unique(x).shape[0] == 1:
+        return 0
+    else:
+        return stats.pearsonr(x, y)[0]
 
 def pa_metric(x, y):
     return numpy.abs(pv_metric(x=x, y=y))

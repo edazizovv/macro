@@ -7,6 +7,7 @@
 #
 from macro.new_base import FoldGenerator
 from macro.new_data_check import pod_loader
+from macro.graph_loader import StandardMSFreq
 
 #
 """
@@ -19,8 +20,9 @@ n_folds = 10
 # n_folds = 2
 joint_lag = 12
 val_rate = 0.5
-overlap_rate = 0.15
-fg = FoldGenerator(n_folds=n_folds, joint_lag=joint_lag, val_rate=val_rate, overlap_rate=overlap_rate)
+overlap_rate = 0.8
+freq = StandardMSFreq()
+fg = FoldGenerator(n_folds=n_folds, joint_lag=joint_lag, val_rate=val_rate, overlap_rate=overlap_rate, freq=freq)
 
 start_date = '2007-01-01'
 end_date = '2025-01-01'

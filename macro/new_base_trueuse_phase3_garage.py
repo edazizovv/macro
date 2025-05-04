@@ -43,6 +43,11 @@ def producer(
         x_train, y_train = data_train[[x for x in data_train.columns if x not in targets]].iloc[:-1, :], data_train[targets].iloc[1:]
         x_test, y_test = data_test[[x for x in data_test.columns if x not in targets]].iloc[:-1, :], data_test[targets].iloc[1:]
 
+        z_train = pandas.concat((x_train, y_train), axis=1)
+        z_train.to_excel('../data/data_folds/data_train_ph3_{0}.xlsx'.format(fold_n), index=True)
+        z_test = pandas.concat((x_test, y_test), axis=1)
+        z_test.to_excel('../data/data_folds/data_test_ph3_{0}.xlsx'.format(fold_n), index=True)
+
         tt_train = x_train.index.values
         tt_test = x_test.index.values
 
@@ -143,6 +148,8 @@ def producer(
             ignore_index=True,
         )
         reported['fold'] = fold_n
+
+        reported.to_excel('../data/data_folds/ptf_dynamics_ph3_{0}.xlsx'.format(fold_n), index=True)
 
         cumulatives.append(reported)
 

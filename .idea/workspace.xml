@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3ba7bcdd-a961-467e-93d6-4a41424ae565" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/functional.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/functional.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_test_projectors.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_test_projectors.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_phase0.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_phase0.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_phase0_garage.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_phase0_garage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_phase1.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_phase1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_phase1_garage.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_phase1_garage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_phase2.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_phase2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_phase2_garage.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_phase2_garage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_phase3_garage.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_phase3_garage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/new_base_trueuse_pods.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/new_base_trueuse_pods.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/macro/raise_fold_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/macro/raise_fold_generator.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="2wJccyiKzFkCZo3pE2I7WvsTa09" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.new_base_trueuse_phase1.executor&quot;: &quot;Debug&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Edward/OneDrive/RAMP/IP-02/new_OSTRTA/macro/macro&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration name="new_base_trueuse_phase1" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="macro" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/macro" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/macro/new_base_trueuse_phase1.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.new_base_trueuse_phase1" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-a5bc9544c897-aa17d162503b-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-243.23654.177" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3ba7bcdd-a961-467e-93d6-4a41424ae565" name="Changes" comment="" />
+      <created>1745763200852</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1745763200852</updated>
+    </task>
+    <servers />
+  </component>
+</project>

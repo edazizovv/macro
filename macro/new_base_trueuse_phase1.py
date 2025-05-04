@@ -10,22 +10,29 @@ from sklearn.linear_model import LinearRegression
 
 #
 from macro.new_base import Path, Projector, Item, FoldGenerator
-from macro.new_base_test_projectors import WindowAppGenerator, VincentClassMobsterS
+from macro.new_base_test_projectors import WindowAppGenerator
 from macro.new_data_check import pod_loader, controller_view
 from functional import pa_metric, r2_metric
 from macro.new_base_truegarage import r2_metric, kendalltau_metric, somersd_metric, BasicLinearModel as MicroModel, BasicLassoSelectorModel as SelectorModel
 from scipy import stats
-from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
+# from macro.new_base_trueuse_pods import features, path_pseudo_edges, path_matrix, path_vertices, sources, name_list, param_list
 from macro.functional import sd_metric, pv_metric
 from raise_fold_generator import fg, start_date, end_date
+from new_base_trueuse_phase1_garage import vincent_class_feature_selection_mechanism, util_prepare_chosen
+from macro.graph_loader import ElementLoader
 
 #
 target = 'IVV_aggmean_pct'
 
-timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime(start_date).isoformat()]
+# timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime(start_date).isoformat()]
 
-save_features = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
-fg.init_path(path_vertices, path_matrix, path_pseudo_edges, save_features)
+loader = ElementLoader(vector_path='../data/data_meta/vector.xlsx')
+
+save_features = numpy.ones(shape=(len(loader.path_vertices),)).astype(dtype=bool)
+fg.init_path(loader.path_vertices, loader.path_matrix, loader.path_pseudo_edges, save_features)
+
+date_range, suggested_lag = fg.find_lags(sources=loader.sources, features=loader.features, target=target)
+# fg.set_lag_from_delta(lag_delta=suggested_lag, timeaxis=date_range)
 
 """
 Stage 1: Univariate selection
@@ -40,19 +47,23 @@ n_bootstrap_samples = 100
 bootstrap_sample_size_rate = 1.0
 alpha = 0.05
 
+x_factors = [x for x in loader.features if x != target]
+
 # threshold filter
 
 check_results, perf_test_agg = vincent_class_feature_selection_mechanism(
     fg=fg,
-    sources=sources,
-    features=features,
+    sources=loader.sources,
+    predictors=x_factors,
     target=target,
-    timeaxis=timeaxis,
+    timeaxis=date_range,
     performer=performer,
     alpha=alpha,
     n_bootstrap_samples=n_bootstrap_samples,
     bootstrap_sample_size_rate=bootstrap_sample_size_rate,
 )
+
+check_results.to_excel("../data/data_folds/perf_results_ph1.xlsx")
 
 check_results_agg = check_results.groupby(by='feature')[['perf', 'perf_test', 'perf_pass']].mean()
 check_results_agg = check_results_agg.sort_values(by=['perf_pass', 'perf'], ascending=False)
@@ -68,7 +79,7 @@ checky = check_results[check_results['feature'] == feature]
 """
 
 chosen = check_results_agg.index[
-    (check_results_agg['perf_pass'] >= 0.3) &
+    (check_results_agg['perf_pass'] >= 0.2) &
     (0.5 <= (check_results_agg['perf_test'] / check_results_agg['perf']))].tolist()
 
 chosen = util_prepare_chosen(

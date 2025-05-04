@@ -49,7 +49,6 @@ def lm_proxy(
                                                                                                         target].iloc[1:]
         x_test, y_test = data_test[[x for x in data_test.columns if x != target]].iloc[:-1, :], data_test[target].iloc[
                                                                                                 1:]
-
         # we need to standardize before lasso
 
         sc = StandardScaler()
@@ -176,11 +175,16 @@ def lm_proxy(
                                                                                                         target].iloc[1:]
         x_test, y_test = data_test[[x for x in data_test.columns if x != target]].iloc[:-1, :], data_test[target].iloc[
                                                                                                 1:]
-
         lm = LinearRegression()
         lm.fit(X=x_train.values, y=y_train.values)
         y_train_hat = lm.predict(X=x_train.values)
         y_test_hat = lm.predict(X=x_test.values)
+
+        z_train = pandas.concat((x_train, pandas.Series(y_train_hat, name="y_hat", index=y_train.index), y_train), axis=1)
+        z_train.to_excel('../data/data_folds/data_train_ph2_{0}.xlsx'.format(fold_n), index=True)
+        z_test = pandas.concat((x_test, pandas.Series(y_test_hat, name="y_hat", index=y_test.index), y_test), axis=1)
+        z_test.to_excel('../data/data_folds/data_test_ph2_{0}.xlsx'.format(fold_n), index=True)
+
 
         perf_train = performer(x=y_train_hat, y=y_train.values)
         perf_test = performer(x=y_test_hat, y=y_test.values)

@@ -20,10 +20,15 @@ from macro.functional import sd_metric, pv_metric
 #
 target = 'IVV_aggmean_pct'
 
-timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime(start_date).isoformat()]
+# timeaxis = sources[1].series['DATE'].values[sources[1].series['DATE'].values >= pandas.to_datetime(start_date).isoformat()]
+
+loader = ElementLoader(vector_path='../data/data_meta/vector.xlsx')
 
 save_features = numpy.ones(shape=(len(path_vertices),)).astype(dtype=bool)
 fg.init_path(path_vertices, path_matrix, path_pseudo_edges, save_features)
+
+date_range, suggested_lag = fg.find_lags(sources=loader.sources, features=loader.features, target=target)
+fg.set_lag_from_delta(lag_delta=suggested_lag, timeaxis=date_range)
 
 """
 Stage 0: Generate features
@@ -64,5 +69,5 @@ collapsed_selection = pandas.DataFrame(data={'new_names': collapsed})
 collapsed_selection['sources'] = collapsed_selection['new_names'].apply(func=lambda x: x.split('__')[0])
 collapsed_selection['transforms'] = collapsed_selection['new_names'].apply(func=lambda x: x.split('__')[1])
 collapsed_selection = collapsed_selection.merge(right=vxl, left_on=['transforms'], right_on=['transform_name'], how='left')
-collapsed_selection.to_excel('../data/reports/output_phase0.xlsx')
+collapsed_selection.to_excel('../data/output_phase0.xlsx')
 """

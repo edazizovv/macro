@@ -144,3 +144,5 @@ selected_features, selected_summary, inter_perf, final_perf = kn_proxy(
 
 final_perf.to_excel('./final_perf_kn.xlsx')
 """
+
+final_perf.to_excel('../data/data_folds/perf_output_phase2.xlsx')
